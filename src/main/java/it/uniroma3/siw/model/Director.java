@@ -10,8 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,13 +39,7 @@ public class Director {
 	private String nationality;
 	
 	@OneToMany(mappedBy = "director")
-	private List<Movie> film = new ArrayList<>();
+	private List<Movie> movies = new ArrayList<>();
 	
-	public Director(String name, String surname, LocalDate birthDate) {
-		this.name = name;
-		this.surname = surname;
-		this.birthDate = birthDate;
-	}
-
 
 }

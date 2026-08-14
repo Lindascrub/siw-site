@@ -9,12 +9,16 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DirectorFormDTO {
-    @NotBlank(message = "Il nome e' obbligatorio")
-    private String nome;
+	
+	private Long id;
+	
+    @NotBlank(message = "Il nome è obbligatorio")
+    private String name;
 
-    @NotBlank(message = "Il cognome e' obbligatorio")
-    private String cognome;
+    @NotBlank(message = "Il cognome è obbligatorio")
+    private String surname;
 
-    private LocalDate dataNascita;
-    private String nazionalita;
+    private LocalDate birthDate;
+    
+    private String nationality;
 }

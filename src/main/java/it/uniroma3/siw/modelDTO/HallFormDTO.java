@@ -12,13 +12,13 @@ public class HallFormDTO {
 
     private Long id;
 
-    @NotBlank(message = "Il nome e' obbligatorio")
+    @NotBlank(message = "Il nome è obbligatorio")
     private String name;
 
-    @NotBlank(message = "L'indirizzo e' obbligatorio")
+    @NotBlank(message = "L'indirizzo è obbligatorio")
     private String address;
 
-    @NotNull(message = "La capienza e' obbligatoria")
+    @NotNull(message = "La capienza è obbligatoria")
     @Positive(message = "La capienza deve essere positiva")
     private Integer capacity;
 }

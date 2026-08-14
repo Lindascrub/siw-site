@@ -53,7 +53,7 @@ public class ScreeningService {
     }
     
     @Transactional(readOnly = true)
-    public List<Screening> findByStatus(Status status) {
+    public List<Screening> findByStatus(ScreeningStatus status) {
         return screeningRepository.findByStatus(status);
     }
     
@@ -90,7 +90,7 @@ public class ScreeningService {
         screening.setFestival(festival);
         screening.setMovie(movie);
         screening.setHall(hall);
-        screening.setStatus(Status.SCHEDULED);
+        screening.setStatus(ScreeningStatus.SCHEDULED);
         
         return screeningRepository.save(screening);
     }

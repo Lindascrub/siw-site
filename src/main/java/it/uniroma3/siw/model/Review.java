@@ -10,10 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +19,8 @@ import lombok.Setter;
 
 
 @Entity 
+@Table(name = "reviews", 
+		uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "movie_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,14 +31,14 @@ public class Review {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
-	@Column(nullable = false)
-	private LocalDate date = LocalDate.now();
-	
-	@Column(nullable = false)
-	private Double rating;
-	
 	@Column(nullable = false, length = 2000)
 	private String text; 
+	
+	@Column(nullable = false)
+	private Integer vote;
+	
+	@Column(nullable = false)
+	private LocalDate date = LocalDate.now();
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "movie_id", nullable = false)
@@ -47,13 +47,5 @@ public class Review {
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
-	
-    
-    public Review(String text, Double rating, LocalDate date) {
-        this.text = text;
-        this.rating = rating;
-        this.date = date;
-    }
-    
 
 }

@@ -3,30 +3,28 @@ package it.uniroma3.siw.modelDTO;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import it.uniroma3.siw.model.Screening;
+import it.uniroma3.siw.model.ScreeningStatus;
 
-@Getter
-@Setter
-public class ScreeningDTO {
+public record ScreeningDTO(
+		Long id,
+		LocalDate date,
+		LocalTime time,
+		ScreeningStatus status,
+		Long festivalId,
+		MovieDTO movie,
+		HallDTO hall
+		) {
+	public static ScreeningDTO from(Screening s) {
+		return new ScreeningDTO(
+				s.getId(),
+				s.getDate(),
+				s.getTime(),
+				s.getStatus(),
+				s.getFestival().getId(),
+				MovieDTO.from(s.getMovie()),
+				HallDTO.from(s.getHall())
+				);
+	}
 
-    private Long id;
-
-    @NotNull(message = "Il festival e' obbligatorio")
-    private Long festivalId;
-
-    @NotNull(message = "Il film e' obbligatorio")
-    private Long movieId;
-
-    @NotNull(message = "La sala e' obbligatoria")
-    private Long HallId;
-
-    @NotNull(message = "La data e' obbligatoria")
-    private LocalDate date;
-
-    @NotNull(message = "L'ora e' obbligatoria")
-    private LocalTime time;
-
- 
 }

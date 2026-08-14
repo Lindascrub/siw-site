@@ -30,8 +30,7 @@ public class Screening {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-
-
+	
 	@Column(nullable = false)
 	private LocalDate date;
 
@@ -40,7 +39,7 @@ public class Screening {
 	
 	@Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-	private Status status = Status.SCHEDULED; 
+	private ScreeningStatus status = ScreeningStatus.SCHEDULED; 
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "festival_id",nullable = false)
@@ -54,16 +53,8 @@ public class Screening {
 	@JoinColumn(name = "hall_id", nullable = false)
 	private Hall hall;
 	
- 
-    public Screening(LocalDate date, LocalTime time) {
-        this.date = date;
-        this.time = time;
-    }
 
 
-	 public enum Status {
-	        SCHEDULED, COMPLETED, CANCELLED
-	    }
 }
 
 

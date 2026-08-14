@@ -7,7 +7,7 @@ import it.uniroma3.siw.model.Review;
 public record ReviewDTO(
 		Long id, 
 		String text, 
-		Double rating, 
+		Integer vote, 
 		LocalDate date,
 		Long movieId, 
 		Long userId, 
@@ -17,10 +17,11 @@ public record ReviewDTO(
 		return new ReviewDTO(
 				r.getId(), 
 				r.getText(), 
-				r.getRating(), 
+				r.getVote(), 
 				r.getDate(),
 				r.getMovie().getId(), 
 				r.getUser().getId(), 
-				r.getUser().getName());
+				r.getUser().getCredentials().getUsername()
+				);
 	}
 }

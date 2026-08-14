@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,21 +29,17 @@ public class Festival {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
-	private Long Id;
+	private Long id;
 	
-	@NotBlank(message = "Il nome è obbligatorio")
 	@Column(nullable = false, length = 100)
 	private String name;
 	
-	@NotNull(message = "L'anno è obbligatorio")
-	@Column(nullable = false, length = 5)
+	@Column(nullable = false)
 	private Integer year;
-	
-	@NotBlank(message = "La città è obbligatorio")
+
 	@Column(nullable = false, length = 100)
 	private String city;
 	
-	@NotNull
 	@Column(nullable = false)
 	private LocalDate startDate;
 	
@@ -54,20 +51,11 @@ public class Festival {
 	private String description;
 	
 	
-	@OneToMany(mappedBy = "festival")
+	@ManyToMany(mappedBy = "festival")
 	private List<Movie> movies = new ArrayList<>();
 	
 	@OneToMany(mappedBy = "festival", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Screening> screenings = new ArrayList<>();
-	
-    
-    public Festival(String name, Integer year, String city, LocalDate startDate, LocalDate endDate) {
-        this.name = name;
-        this.year = year;
-        this.city = city;
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
 
 
 }

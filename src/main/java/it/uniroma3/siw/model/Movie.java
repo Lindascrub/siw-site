@@ -15,10 +15,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,20 +31,15 @@ public class Movie {
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	private Long id;
 	
-	@NotBlank(message = "Il titolo è obbligatorio")
 	@Column(nullable = false, length = 100)
 	private String title;
 	
-	@NotNull(message = "L'anno è obbligatorio")
-	@Column(nullable = false, length = 100)
+	@Column(nullable = false)
 	private Integer year;
 	
-	@NotBlank(message = "La durata è obbligatorio")
-	@Min(1)
-	@Max(400)
+	@Column(nullable = false)
 	private Integer duration;
 
-	@NotNull(message = "Il genere è obbligatorio")
 	@Column(nullable = false, length = 100)
 	private String genre;
 
@@ -72,8 +63,5 @@ public class Movie {
 
 	@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Review> reviews = new ArrayList<>();
-
-
-
 
 }

@@ -9,10 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,20 +29,13 @@ public class Hall {
 	@Column(nullable = false, length = 100)
 	private String name;
 	
-	@Column(length = 100)
+	@Column(nullable = false, length = 100)
 	private String address;
 	
-    @Min(value = 1, message = "La capienza deve essere almeno 1")
-    @Max(value = 500)
+	@Column(nullable = false)
 	private Integer capacity;
 
 	@OneToMany(mappedBy = "hall") 
-	private List<Screening> screening = new ArrayList<>();
-	    
-    public Hall(String name, Integer capacity) {
-        this.name = name;
-        this.capacity = capacity;
-    }
-	
+	private List<Screening> screenings = new ArrayList<>();
 
 }

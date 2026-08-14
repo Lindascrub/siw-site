@@ -12,19 +12,19 @@ import lombok.Setter;
 public class FestivalFormDTO {
 	private Long id;
 
-    @NotBlank(message = "Il nome e' obbligatorio")
+    @NotBlank(message = "Il nome è obbligatorio")
     private String name;
 
-    @NotNull(message = "L'anno e' obbligatorio")
+    @NotNull(message = "L'anno è obbligatorio")
     private Integer year;
 
-    @NotBlank(message = "La citta' e' obbligatoria")
+    @NotBlank(message = "La città è obbligatoria")
     private String city;
 
-    @NotNull(message = "La data di inizio e' obbligatoria")
+    @NotNull(message = "La data di inizio è obbligatoria")
     private LocalDate startDate;
 
-    @NotNull(message = "La data di fine e' obbligatoria")
+    @NotNull(message = "La data di fine è obbligatoria")
     private LocalDate endDate;
 
     private String description;

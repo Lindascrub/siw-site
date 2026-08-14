@@ -15,7 +15,7 @@ import java.util.List;
 public interface ScreeningRepository extends JpaRepository<Screening, Long> {
     
     // ========== I TUOI METODI ==========
-    List<Screening> findByStatus(Status status);
+    List<Screening> findByStatus(ScreeningStatus status);
     
     // ========== ALTRI METODI UTILI ==========
     List<Screening> findByFestivalId(Long festivalId);
