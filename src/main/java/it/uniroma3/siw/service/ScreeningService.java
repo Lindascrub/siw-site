@@ -13,7 +13,9 @@ import it.uniroma3.siw.model.Hall;
 import it.uniroma3.siw.model.Movie;
 import it.uniroma3.siw.model.Screening;
 import it.uniroma3.siw.model.Screening.Status;
+import it.uniroma3.siw.modelDTO.ScreeningFormDTO;
 import it.uniroma3.siw.repository.ScreeningRepository;
+import jakarta.validation.Valid;
 
 @Service
 @Transactional
@@ -109,4 +111,19 @@ public class ScreeningService {
     public void deleteScreening(Long id) {
         screeningRepository.deleteById(id);
     }
+
+	public void schedule(@Valid ScreeningFormDTO form) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void update(Long id, @Valid ScreeningFormDTO form) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void delete(Long id) {
+		// TODO Auto-generated method stub
+		
+	}
 }

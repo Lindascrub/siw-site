@@ -1,79 +1,68 @@
 package it.uniroma3.siw.service;
 
 
+import it.uniroma3.siw.exception.BusinessRuleException;
+import it.uniroma3.siw.exception.ResourceNotFoundException;
 import it.uniroma3.siw.model.Director;
+import it.uniroma3.siw.modelDTO.DirectorFormDTO;
 import it.uniroma3.siw.repository.DirectorRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-
 @Service
-@Transactional
+@Transactional(readOnly = true)
+@RequiredArgsConstructor  
 public class DirectorService {
     
-    @Autowired
-    private DirectorRepository directorRepository;
+    private final DirectorRepository directorRepository;
     
     
-    @Transactional(readOnly = true)
-    public List<Director> findAll() {
+      public List<Director> findAll() {
         return directorRepository.findAll();
     }
     
-    @Transactional(readOnly = true)
-    public Optional<Director> findById(Long id) {
-        return directorRepository.findById(id);
+    public Director findById(Long id) {
+        return directorRepository.findById(id)
+        		.orElseThrow(() -> new ResourceNotFoundException("Regista non trovatocon id:" + id));
     }
     
-    @Transactional(readOnly = true)
-    public Director findByIdWithMovies(Long id) {
-        return directorRepository.findByIdWithMovies(id)
-            .orElseThrow(() -> new RuntimeException("Regista non trovato con id: " + id));
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Director> findByNameAndSurname(String name, String surname) {
-        return directorRepository.findByNameAndSurname(name, surname);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Director> findByNationality(String nationality) {
-        return directorRepository.findByNationality(nationality);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Director> findDirectorsWithMovies() {
-        return directorRepository.findDirectorsWithMovies();
-    }
-    
-    
-    public Director save(Director director) {
+    @Transactional
+	public Director create(DirectorFormDTO form) {
+		Director d = new Director();
+		applyForm(d, form);
+		return directorRepository.save(d);
+		
+	}
 
-        List<Director> existing = directorRepository.findByNameAndSurname(
-            director.getName(), director.getSurname());
-        if (!existing.isEmpty()) {
-            throw new RuntimeException("Regista già presente nel sistema");
-        }
-        return directorRepository.save(director);
-    }
-    
-    public Director update(Director director) {
-        Director existing = directorRepository.findById(director.getId())
-            .orElseThrow(() -> new RuntimeException("Regista non trovato"));
-        
-        existing.setName(director.getName());
-        existing.setSurname(director.getSurname());
-        existing.setBirth(director.getBirth());
-        existing.setNationality(director.getNationality());
-        
-        return directorRepository.save(existing);
-    }
+
+	public Director update(Long id, DirectorFormDTO form) {
+		Director d = findById(id);
+		applyForm(d, form);
+		return directorRepository.save(d);
+		
+		
+	}
+
     
     public void delete(Long id) {
-        directorRepository.deleteById(id);
+    	Director d = findById(id);
+		if(!d.getMovies().isEmpty()) {
+			throw new BusinessRuleException( "Impossibile eliminare il regista " + d.getName() + "': esistono film a lui associati.");
+		}
+		directorRepository.delete(d);
     }
+    
+	private void applyForm(Director d, DirectorFormDTO form) {
+		d.setName(form.getName());
+		d.setSurname(form.getSurname());
+		d.setBirthDate(form.getBirthDate());
+		d.setNationality(form.getNationality());
+		
+	}
+
+
+
 }

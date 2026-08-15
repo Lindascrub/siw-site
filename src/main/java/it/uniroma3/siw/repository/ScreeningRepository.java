@@ -1,7 +1,8 @@
 package it.uniroma3.siw.repository;  
 
 import it.uniroma3.siw.model.Screening;
-import it.uniroma3.siw.model.Screening.Status;
+
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,26 +15,34 @@ import java.util.List;
 @Repository
 public interface ScreeningRepository extends JpaRepository<Screening, Long> {
     
-    // ========== I TUOI METODI ==========
-    List<Screening> findByStatus(ScreeningStatus status);
-    
-    // ========== ALTRI METODI UTILI ==========
-    List<Screening> findByFestivalId(Long festivalId);
-    List<Screening> findByMovieId(Long movieId);
-    List<Screening> findByHallId(Long hallId);
-    
-    List<Screening> findByFestivalIdOrderByDateAscTimeAsc(Long festivalId);
-    
-    // QUERY PER SOVRAPPOSIZIONI (importante per il caso d'uso)
+	  List<Screening> findByFestivalId(Long festivalId);
+	  
+	  @Query("select s from Screening s "
+	  		+ "join fetch s.movie "
+	  		+ "join fetch m.hall "
+	  		+ "where s.festival.id = :festivalId "
+	  		+ "order by s.date, s.time ")
+	  List<Screening> findFestivalIdByJoinFetch(@Param("festivalId") Long fetivalId);
+	  
+	  @EntityGraph(attributePaths = {"movie", "hall"})
+	  @Query("select s from Screening s"
+			  + "where s.festival.id = : festivalId"
+			  + "order by s.date, s.time")
+	  List<Screening> findFestivalIdByEntityGraph(@Param("festivalId") Long fetivalId);
+	
     @Query("SELECT s FROM Screening s " +
            "WHERE s.hall.id = :hallId " +
            "AND s.date = :date " +
-           "AND s.status != 'CANCELLED' " +
+           "AND s.status <> it.uniroma3.siw.model.ScreeningStatus.CANCELLED" +
            "AND s.time BETWEEN :startTime AND :endTime")
-    List<Screening> findOverlappingScreenings(
+    List<Screening> findConflictingScreenings(
         @Param("hallId") Long hallId,
         @Param("date") LocalDate date,
         @Param("startTime") LocalTime startTime,
         @Param("endTime") LocalTime endTime
     );
+    
+    boolean existsByMovieId(Long movieId);
+    boolean existsByHallId(Long hallId);
+    
 }

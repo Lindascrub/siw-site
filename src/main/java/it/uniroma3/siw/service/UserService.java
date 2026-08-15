@@ -1,48 +1,45 @@
+
 package it.uniroma3.siw.service;
 
+import it.uniroma3.siw.exception.BusinessRuleException;
+import it.uniroma3.siw.model.Credentials;
+import it.uniroma3.siw.model.Role;
 import it.uniroma3.siw.model.User;
+import it.uniroma3.siw.repository.CredentialsRepository;
 import it.uniroma3.siw.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
+@RequiredArgsConstructor  
 public class UserService {
     
     @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final CredentialsRepository credentialsRepository;
+    private final PasswordEncoder passwordEncoder;
     
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return userRepository.findAll();
+    @Transactional
+	public Credentials register(String username, String rawPassword, String name, String surname, String email) {
+		if(credentialsRepository.existsByUsername(username)) {
+			throw new BusinessRuleException("Username già in uno"+ username);
+		}
+		User profile = new User(name, surname, email);
+		Credentials credentials = new Credentials(username, passwordEncoder.encode(rawPassword), Role.USER, profile);
+		return credentialsRepository.save(credentials);
     }
     
-    @Transactional(readOnly = true)
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
-    }
-    
-    @Transactional(readOnly = true)
-    public User findByUsername(String username) {
-        return userRepository.findByCredentialsUsername(username)
+    public Credentials findByUsername(String username) {
+        return credentialsRepository.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("Utente non trovato con username: " + username));
     }
-    
-    @Transactional(readOnly = true)
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-    
-    @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-    
-    public User save(User user) {
-        return userRepository.save(user);
-    }
+
+
+
 }

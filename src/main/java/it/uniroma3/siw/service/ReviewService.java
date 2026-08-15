@@ -3,12 +3,18 @@ package it.uniroma3.siw.service;
 import it.uniroma3.siw.model.Movie;
 import it.uniroma3.siw.model.Review;
 import it.uniroma3.siw.model.User;
+import it.uniroma3.siw.modelDTO.ReviewCreateDTO;
 import it.uniroma3.siw.repository.ReviewRepository;
+import it.uniroma3.siw.security.UserDetails;
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -117,6 +123,34 @@ public class ReviewService {
         
         reviewRepository.delete(existing);
     }
+    
+    @Transactional
+    public Review create(Long filmId, Object object, ReviewCreateDTO dto) {
+        if (recensioneRepository.existsByFilmIdAndUtenteId(filmId, object)) {
+            throw new DuplicateReviewException("Hai gia' inserito una recensione per questo film");
+        }
+        Film film = filmRepository.findById(filmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + filmId));
+        Utente utente = utenteRepository.findById(object)
+                .orElseThrow(() -> new ResourceNotFoundException("Utente non trovato: id=" + utenteId));
+
+        Recensione r = new Recensione();
+        r.setTesto(dto.testo());
+        r.setVoto(dto.voto());
+        r.setFilm(film);
+        r.setUtente(utente);
+        return recensioneRepository.save(r);
+    }
+
+	public Review update(Long id, Object id2, @Valid ReviewCreateDTO dto) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void delete(Long id, Object id2) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }
 

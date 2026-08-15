@@ -1,104 +1,88 @@
 package it.uniroma3.siw.service;
 
+import it.uniroma3.siw.exception.BusinessRuleException;
+import it.uniroma3.siw.exception.ResourceNotFoundException;
 import it.uniroma3.siw.model.Director;
 import it.uniroma3.siw.model.Movie;
+import it.uniroma3.siw.modelDTO.MovieFormDTO;
+import it.uniroma3.siw.repository.DirectorRepository;
 import it.uniroma3.siw.repository.MovieRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import it.uniroma3.siw.repository.ScreeningRepository;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
-
 @Service
-@Transactional
+@Transactional(readOnly = true)
+@RequiredArgsConstructor  
 public class MovieService {
     
-    @Autowired
-    private MovieRepository movieRepository;
+    private final MovieRepository movieRepository;
+    private final DirectorRepository directorRepository;
+    private final ScreeningRepository screeningRepository;
     
-    @Autowired
-    private DirectorService directorService;
-    
-    
-    @Transactional(readOnly = true)
+
     public List<Movie> findAll() {
-        return (List<Movie>) movieRepository.findAll();
+        return movieRepository.findAll();
     }
-    
-    @Transactional(readOnly = true)
-    public List<Movie> findAllWithDirector() {
-        return movieRepository.findAllWithDirector();
+
+    public Movie findById(Long id) {
+        return movieRepository.findById(id)
+        		.orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + id));
     }
-    
-    @Transactional(readOnly = true)
-    public Optional<Movie> findById(Long id) {
-        return movieRepository.findById(id);
-    }
-    
-    @Transactional(readOnly = true)
-    public Movie findByIdWithDirector(Long id) {
-        return movieRepository.findByIdWithDirector(id)
-            .orElseThrow(() -> new RuntimeException("Film non trovato con id: " + id));
-    }
-    
-    @Transactional(readOnly = true)
+  
     public Movie findByIdWithDetails(Long id) {
         return movieRepository.findByIdWithDetails(id)
             .orElseThrow(() -> new RuntimeException("Film non trovato con id: " + id));
     }
-    
-    @Transactional(readOnly = true)
-    public List<Movie> findByTitle(String title) {
-        return movieRepository.findByTitle(title);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Movie> findByTitleContaining(String title) {
-        return movieRepository.findByTitleContaining(title);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Movie> findByDirectorId(Long directorId) {
-        return movieRepository.findByDirectorId(directorId);
-    }
-    
-    public Movie save(Movie movie) {
 
-        if (movieRepository.existsByTitleAndYear(movie.getTitle(), movie.getYear())) {
-            throw new RuntimeException("Film già presente nel sistema: " + movie.getTitle());
-        }
-        
-        
-        if (movie.getDirector() != null && movie.getDirector().getId() != null) {
-            Director director = directorService.findById(movie.getDirector().getId())
-                .orElseThrow(() -> new RuntimeException("Regista non trovato"));
-            movie.setDirector(director);
-        }
-        
-        return movieRepository.save(movie);
-    }
-    
-    public Movie update(Movie movie) {
-        Movie existing = movieRepository.findById(movie.getId())
-            .orElseThrow(() -> new RuntimeException("Film non trovato"));
-        
-        existing.setTitle(movie.getTitle());
-        existing.setYear(movie.getYear());
-        existing.setDuration(movie.getDuration());
-        existing.setGenre(movie.getGenre());
-        existing.setProductionContry(movie.getProductionContry());
-        
-        if (movie.getDirector() != null && movie.getDirector().getId() != null) {
-            Director director = directorService.findById(movie.getDirector().getId())
-                .orElseThrow(() -> new RuntimeException("Regista non trovato"));
-            existing.setDirector(director);
-        }
-        
-        return movieRepository.save(existing);
-    }
-    
+	public List<Movie> search(String title) {
+		return movieRepository.searchByTitle(title);
+	}
+	
+	@Transactional
+	public Movie create(MovieFormDTO form) {
+		Movie m = new Movie();
+		applyForm(m, form);
+		return movieRepository.save(m);	
+	}
+	
+	@Transactional
     public void delete(Long id) {
-        movieRepository.deleteById(id);
+		 Movie movie = findById(id);
+	        if (screeningRepository.existsByMovieId(id)) {
+	            throw new BusinessRuleException(
+	                    "Impossibile eliminare il film '" + movie.getTitle() + "': esistono proiezioni programmate che lo riguardano.");
+	        }
+	        movieRepository.delete(movie);
     }
+
+    public List<Movie> findByFestivalLazy(Long festivalId) {
+        return movieRepository.findByFestivalIdLazy(festivalId);
+    }
+    
+    public List<Movie> findByFestivalJoinFetch(Long festivalId) {
+        return movieRepository.findByFestivalIdJoinFetch(festivalId);
+    }
+    
+    public List<Movie> findByFestivalEntityGraph(Long festivalId) {
+        return movieRepository.findByFestivalIdEntityGraph(festivalId);
+    }
+    
+    private void applyForm(Movie m, MovieFormDTO form) {
+	Director director = directorRepository.findById(form.getDirectorId())
+			.orElseThrow(()-> new ResourceNotFoundException("Regista non trovato: is"+ form.getDirectorId()));
+	m.setTitle(form.getTitle());
+	m.setYear(form.getYear());
+	m.setDuration(form.getDuration());
+	m.setGenre(form.getGenre());
+	m.setContryProduction(form.getContryProduction());
+	m.setDirector(director);
+	
+	}
+
+	
+
 }

@@ -24,7 +24,7 @@ public class FestivalService {
     private final MovieRepository movieRepository;
     
     public List<Festival> findAll() {
-        return festivalRepository.findAllByOrderByDataInizioDesc();
+        return festivalRepository.findAllByOrderByStartDateDecr();
     }
 
     public Festival findById(Long id) {
@@ -33,14 +33,13 @@ public class FestivalService {
     }
 
     public Festival findByIdWithMovie(Long id) {
-        return festivalRepository.findByIdWithMovie(id)
+        return ((FestivalRepository) festivalRepository).findByIdWithMovie(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Festival non trovato: id=" + id));
     }
 
     
     @Transactional
     public Festival create(FestivalFormDTO form) {
-        validateDates(form.getStartdate(), form.getendDate());  
         Festival f = new Festival();
         applyForm(f, form);
         return festivalRepository.save(f);
@@ -48,7 +47,6 @@ public class FestivalService {
 
     @Transactional
     public Festival update(Long id, FestivalFormDTO form) {
-    	 validateDates(form.getStartdate(), form.getendDate()); 
         Festival f = findById(id);
         applyForm(f, form);
         return festivalRepository.save(f);
@@ -60,43 +58,34 @@ public class FestivalService {
         festivalRepository.delete(f);
     }
 
-    
-    @Transactional
-    public void associaFilm(Long festivalId, Long movieId) {
-        Festival festival = findById(festivalId);
-        Movie film = movieRepository.findById(movieId)
-                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
-        movie.getFestivals().add(festival);  
-        movieRepository.save(movie);
-    }
 
     @Transactional
-    public void rimuoviMovie(Long festivalId, Long movieId) {
+    public void associateMovie(Long festivalId, Long movieId) {
         Festival festival = findById(festivalId);
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
-        movie.getFestivals().remove(festival); 
-        movieRepository.save(movie);
+        if (!movie.getFestivals().contains(festival)) {
+            movie.getFestivals().add(festival);
+            movieRepository.save(movie);
+        }
     }
 
-    // ===== METODI PRIVATI =====
+    public void removeMovie(Long festivalId, Long movieId) {
+    	  Festival festival = findById(festivalId);
+          Movie movie = movieRepository.findById(movieId)
+                  .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
+          movie.getFestivals().remove(festival);
+          movieRepository.save(movie);
+	}
     
     private void applyForm(Festival f, FestivalFormDTO form) {
         f.setName(form.getName());
+        f.setYear(form.getYear());
         f.setCity(form.getCity());
-        f.setDescription(form.getDescription());
+        f.setStartDate(form.getStartDate());
         f.setEndDate(form.getEndDate());
-        f.getYear();
-        f.setAnno(form.getAnno());
-        f.setCitta(form.getCitta());
-        f.setDataInizio(form.getDataInizio());
-        f.setDataFine(form.getDataFine());
-        f.setDescrizione(form.getDescrizione());
+        f.setDescription(form.getDescription());
     }
     
-    private void validateDates(LocalDate start, LocalDate end) {
-        if (end.isBefore(start)) {
-            throw new IllegalArgumentException("La data di fine deve essere dopo la data di inizio");
-        }
-    }
+  
 }
