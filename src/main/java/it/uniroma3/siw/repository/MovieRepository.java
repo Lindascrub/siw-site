@@ -7,9 +7,11 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import it.uniroma3.siw.model.Movie;
 
+@Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
     @Query("select m from Movie m join m.festival fest where fest.id = :festivalId")
     List<Movie> findByFestivalIdLazy(@Param("festivalId") Long festivalId);

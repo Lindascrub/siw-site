@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - Movies')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container">
+    <h1>Manage Movies</h1>
+    <a class="btn btn-success mb-3" th:href="@{/admin/movies/new}">+ New movie</a>
+    <table class="table table-striped">
+        <thead><tr><th>Title</th><th>Year</th><th>Director</th><th>Actions</th></tr></thead>
+        <tbody>
+        <tr th:each="m : ${movieList}">
+            <td th:text="${m.title}"></td>
+            <td th:text="${m.year}"></td>
+            <td th:text="${m.director.name} + ' ' + ${m.director.surname}"></td>
+            <td>
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/admin/movies/{id}/edit(id=${m.id})}">Edit</a>
+                <form th:action="@{/admin/movies/{id}/delete(id=${m.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${movie.title})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container">
+    <h1 th:text="${movie.title}">Title</h1>
+    <p class="text-muted" th:text="${movie.genre} + ' - ' + ${movie.year} + ' - ' + ${movie.duration} + ' min - ' + ${movie.contryProduction}"></p>
+
+    <h4>Director</h4>
+    <p th:text="${movie.director.name} + ' ' + ${movie.director.surname} + ' (' + ${movie.director.nationality} + ')'"></p>
+
+    <h4>Festivals</h4>
+    <ul>
+        <li th:each="f : ${movie.festivals}">
+            <a th:href="@{/festivals/{id}(id=${f.id})}" th:text="${f.name} + ' (' + ${f.year} + ')'">Festival</a>
+        </li>
+    </ul>
+
+    <h4>Reviews</h4>
+    <div th:each="r : ${reviews}" class="border rounded p-2 mb-2">
+        <strong th:text="${r.user.credentials.username}">username</strong>
+        - <span th:text="'Vote: ' + ${r.vote} + '/5'"></span>
+        <span class="text-muted small" th:text="${r.date}"></span>
+        <p th:text="${r.text}">Review text</p>
+    </div>
+    <p th:if="${#lists.isEmpty(reviews)}" class="text-muted">No reviews yet.</p>
+
+    <div sec:authorize="hasRole('USER')" class="mt-4">
+        <h5>Add a review</h5>
+        <form th:action="@{/movies/{id}/recensioni(id=${movie.id})}" th:object="${reviewForm}" method="post">
+            <div class="mb-2">
+                <label class="form-label">Vote (1-5)</label>
+                <input type="number" min="1" max="5" class="form-control" th:field="*{vote}"/>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Text</label>
+                <textarea class="form-control" th:field="*{text}"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit review</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
