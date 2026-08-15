@@ -26,13 +26,13 @@ public class AdminDirectorController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("directors", directorService.findAll());
-        return "list";
+        return "admin/director/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("directorForm", new DirectorFormDTO());
-        return "form";
+        return "admin/director/form";
     }
 
     @GetMapping("/{id}/edit")
@@ -45,13 +45,13 @@ public class AdminDirectorController {
         form.setBirthDate(d.getBirthDate());
         form.setNationality(d.getNationality());
         model.addAttribute("directorForm", form);
-        return "form";
+        return "admin/director/form";
     }
 
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("directorForm") DirectorFormDTO form, BindingResult binding) {
         if (binding.hasErrors()) {
-            return "form";
+            return "admin/director/form";
         }
         if (form.getId() == null) {
         	directorService.create(form);

@@ -38,7 +38,7 @@ public class AdminScreeningController {
         form.setFestivalId(festivalId);
         model.addAttribute("screeningForm", form);
         addReferenceData(model);
-        return "form";
+        return "admin/screening/form";
     }
 
     @GetMapping("/{id}/edit")
@@ -53,14 +53,14 @@ public class AdminScreeningController {
         form.setTime(s.getTime());
         model.addAttribute("screeningForm", form);
         addReferenceData(model);
-        return "form";
+        return "admin/screening/form";
     }
 
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("screeningForm") ScreeningFormDTO form, BindingResult binding, Model model) {
         if (binding.hasErrors()) {
             addReferenceData(model);
-            return "form";
+            return "admin/screening/form";
         }
         try {
             if (form.getId() == null) {
@@ -68,14 +68,18 @@ public class AdminScreeningController {
             } else {
             	screeningService.update(form.getId(), form);
             }
+            // FIX: mancava questo return - senza, il "percorso felice" (nessuna
+            // eccezione) cadeva alla fine del metodo senza ritornare nulla,
+            // motivo esatto dell'errore "missing return statement" del compilatore
+            return "redirect:/festivals/" + form.getFestivalId() + "/programms";
         } catch (BusinessRuleException e) {
             binding.reject("screening.hall.notAvailable", e.getMessage());
             addReferenceData(model);
-            return "admin/screening-form";
+            return "admin/screening/form";
         } catch (ResourceNotFoundException e) {
             binding.reject("screening.entity.notFound", e.getMessage());
             addReferenceData(model);
-            return "form";
+            return "admin/screening/form";
         }
     }
 

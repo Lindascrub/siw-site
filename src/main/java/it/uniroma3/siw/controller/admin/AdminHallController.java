@@ -28,13 +28,13 @@ public class AdminHallController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("halls", hallService.findAll());
-        return "list";
+        return "admin/hall/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("hallForm", new HallFormDTO());
-        return "form";
+        return "admin/hall/form";
     }
 
     @GetMapping("/{id}/edit")
@@ -46,13 +46,13 @@ public class AdminHallController {
         form.setAddress(h.getAddress());
         form.setCapacity(h.getCapacity());
         model.addAttribute("hallForm", form);
-        return "admin/hall-form";
+        return "admin/hall/form";
     }
 
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("hallForm") HallFormDTO form, BindingResult binding) {
         if (binding.hasErrors()) {
-            return "admin/hall-form";
+            return "admin/hall/form";
         }
         if (form.getId() == null) {
         	hallService.create(form);

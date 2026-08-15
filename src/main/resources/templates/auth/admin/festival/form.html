@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - Festivals')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container" style="max-width: 600px;">
+    <h1 th:text="${festivalForm.id} == null ? 'New festival' : 'Edit festival'">Festival</h1>
+    <form th:action="@{/admin/festivals/save}" th:object="${festivalForm}" method="post">
+        <input type="hidden" th:field="*{id}"/>
+        <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input class="form-control" th:field="*{name}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Year</label>
+            <input type="number" class="form-control" th:field="*{year}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">City</label>
+            <input class="form-control" th:field="*{city}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Start date</label>
+            <input type="date" class="form-control" th:field="*{startDate}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">End date</label>
+            <input type="date" class="form-control" th:field="*{endDate}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" th:field="*{description}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+</body>
+</html>

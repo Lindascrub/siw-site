@@ -27,13 +27,13 @@ public class AdminFestivalController {
 	@GetMapping
 	public String list(Model model) {
 		model.addAttribute("festivals", festivalService.findAll());
-		return "list";
+		return "admin/festival/list";
 	}
 
 	@GetMapping("/new")
 	public String newForm(Model model) {
 		model.addAttribute("festivalForm", new FestivalFormDTO());
-		return "form";
+		return "admin/festival/form";
 	}
 
 	@GetMapping("/{id}/edit")
@@ -48,13 +48,13 @@ public class AdminFestivalController {
 		form.setEndDate(f.getEndDate());
 		form.setDescription(f.getDescription());
 		model.addAttribute("festivalForm", form);
-		return "form";
+		return "admin/festival/form";
 	}
 
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("festivalForm") FestivalFormDTO form, BindingResult binding) {
         if (binding.hasErrors()) {
-            return "admin/festival-form";
+            return "admin/festival/form";
         }
         if (form.getId() == null) {
             festivalService.create(form);
@@ -74,7 +74,7 @@ public class AdminFestivalController {
     public String manageMovie(@PathVariable Long id, Model model) {
         model.addAttribute("festival", festivalService.findByIdWithMovie(id));
         model.addAttribute("allMovies", movieService.findAll());
-        return "admin/festival-movies";
+        return "admin/festival/movies";
     }
 
     @PostMapping("/{id}/movies/{movieId}/associa")

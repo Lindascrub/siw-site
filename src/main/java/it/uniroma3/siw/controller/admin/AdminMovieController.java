@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import it.uniroma3.siw.model.Movie;
-import it.uniroma3.siw.modelDTO.FestivalFormDTO;
 import it.uniroma3.siw.modelDTO.MovieFormDTO;
 import it.uniroma3.siw.service.DirectorService;
 import it.uniroma3.siw.service.MovieService;
@@ -28,14 +27,14 @@ public class AdminMovieController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("movieList", movieService.findAll());
-        return "list";
+        return "admin/movie/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("movieForm", new MovieFormDTO());
         model.addAttribute("directors", directorService.findAll());
-        return "form";
+        return "admin/movie/form";
     }
 
     @GetMapping("/{id}/edit")
@@ -51,14 +50,14 @@ public class AdminMovieController {
         form.setDirectorId(m.getDirector().getId());
         model.addAttribute("movieForm", form);
         model.addAttribute("directors", directorService.findAll());
-        return "form";
+        return "admin/movie/form";
     }
 
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("movieForm") MovieFormDTO form, BindingResult binding, Model model) {
         if (binding.hasErrors()) {
             model.addAttribute("directors", directorService.findAll());
-            return "admin/movie-form";
+            return "admin/movie/form";
         }
         if (form.getId() == null) {
         	movieService.create(form);

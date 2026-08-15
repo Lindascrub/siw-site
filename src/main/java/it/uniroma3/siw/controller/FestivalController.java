@@ -24,7 +24,7 @@ public class FestivalController {
 		Festival festival = festivalService.findByIdWithMovie(id);
 		model.addAttribute("festival", festival);
 		model.addAttribute("movie", festival.getMovies());
-		return "festival/detail";
+		return "festivals/detail";
 	}
 
 	@GetMapping("/{id}/programms")
@@ -32,7 +32,7 @@ public class FestivalController {
 		Festival festival = festivalService.findById(id);
 		model.addAttribute("festival", festival);
 		model.addAttribute("screenings", screeningService.findByFestival(id));
-		return "festival/programms";
+		return "festivals/programms";
 	}
 
 }

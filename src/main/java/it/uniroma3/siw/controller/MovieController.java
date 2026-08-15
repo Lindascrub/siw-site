@@ -34,7 +34,7 @@ public class MovieController {
 		if(!model.containsAttribute("reviewForm")) {
 			model.addAttribute("reviewForm", new ReviewCreateDTO("", null));
 		}
-		return "movie/detail";
+		return "movies/details";
 	}
 
 	@PostMapping("/{id}/recensioni")

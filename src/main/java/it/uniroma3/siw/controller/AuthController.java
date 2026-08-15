@@ -20,11 +20,11 @@ public class AuthController {
 
 	@GetMapping("/login")
 	public String loginForm() {
-		return "login";
+		return "auth/login";
 	}
     @GetMapping("/register")
     public String registerForm() {
-        return "register";
+        return "auth/register";
     }
 
     @PostMapping("/register")
@@ -35,7 +35,7 @@ public class AuthController {
             userService.register(username, password, name, surname, email);
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
-            return "register";
+            return "auth/register";
         }
         return "redirect:/auth/login?registered";
     }

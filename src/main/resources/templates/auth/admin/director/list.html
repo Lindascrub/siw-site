@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - Directors')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container">
+    <h1>Manage Directors</h1>
+    <a class="btn btn-success mb-3" th:href="@{/admin/directors/new}">+ New director</a>
+    <table class="table table-striped">
+        <thead><tr><th>Name</th><th>Surname</th><th>Nationality</th><th>Actions</th></tr></thead>
+        <tbody>
+        <tr th:each="d : ${directors}">
+            <td th:text="${d.name}"></td>
+            <td th:text="${d.surname}"></td>
+            <td th:text="${d.nationality}"></td>
+            <td>
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/admin/directors/{id}/edit(id=${d.id})}">Edit</a>
+                <form th:action="@{/admin/directors/{id}/delete(id=${d.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

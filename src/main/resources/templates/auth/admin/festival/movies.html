@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Manage movies - ' + ${festival.name})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container">
+    <h1 th:text="'Movies for: ' + ${festival.name}">Movies</h1>
+
+    <h4>Associated movies</h4>
+    <ul class="list-group mb-4">
+        <li class="list-group-item d-flex justify-content-between align-items-center" th:each="m : ${festival.movies}">
+            <span th:text="${m.title}">Title</span>
+            <form th:action="@{/admin/festivals/{id}/movies/{movieId}/remove(id=${festival.id}, movieId=${m.id})}" method="post">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+            </form>
+        </li>
+    </ul>
+
+    <h4>Associate a new movie</h4>
+    <table class="table">
+        <tbody>
+        <tr th:each="m : ${allMovies}">
+            <td th:text="${m.title}"></td>
+            <td>
+                <form th:action="@{/admin/festivals/{id}/movies/{movieId}/associa(id=${festival.id}, movieId=${m.id})}" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Associate</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

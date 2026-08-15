@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - Directors')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container" style="max-width: 600px;">
+    <h1 th:text="${directorForm.id} == null ? 'New director' : 'Edit director'">Director</h1>
+    <form th:action="@{/admin/directors/save}" th:object="${directorForm}" method="post">
+        <input type="hidden" th:field="*{id}"/>
+        <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input class="form-control" th:field="*{name}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Surname</label>
+            <input class="form-control" th:field="*{surname}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Birth date</label>
+            <input type="date" class="form-control" th:field="*{birthDate}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Nationality</label>
+            <input class="form-control" th:field="*{nationality}"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+</body>
+</html>
