@@ -15,6 +15,7 @@ import it.uniroma3.siw.service.DirectorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+
 @Controller
 @RequestMapping("/admin/directors")
 @RequiredArgsConstructor
@@ -50,7 +51,7 @@ public class AdminDirectorController {
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("directorForm") DirectorFormDTO form, BindingResult binding) {
         if (binding.hasErrors()) {
-            return "/form";
+            return "form";
         }
         if (form.getId() == null) {
         	directorService.create(form);
@@ -65,6 +66,7 @@ public class AdminDirectorController {
     	directorService.delete(id);
         return "redirect:/admin/directors";
     }
-    
+
 
 }
+

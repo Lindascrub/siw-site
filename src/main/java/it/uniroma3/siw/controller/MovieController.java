@@ -25,18 +25,18 @@ import lombok.RequiredArgsConstructor;
 public class MovieController {
 	private final MovieService movieService;
 	private final ReviewService reviewService;
-	
+
 	@GetMapping("/{id}")
 	public String detail(@PathVariable Long id, Model model) {
 		Movie movie = movieService.findByIdWithDetails(id);
 		model.addAttribute("movie", movie);
-		model.addAttribute("reviws", reviewService.findByMovie(id));
+		model.addAttribute("reviews", reviewService.findByMovie(id));
 		if(!model.containsAttribute("reviewForm")) {
 			model.addAttribute("reviewForm", new ReviewCreateDTO("", null));
 		}
-		return "detail";
+		return "movie/detail";
 	}
-	
+
 	@PostMapping("/{id}/recensioni")
 	public String addReview(@PathVariable Long id,
 			@Valid @ModelAttribute("reviewForm") ReviewCreateDTO form,
@@ -48,6 +48,6 @@ public class MovieController {
 		}
 		reviewService.create(id, principal.getId(), form);
 		return "redirect:/movies/" + id;
-		
+
 	}
 }

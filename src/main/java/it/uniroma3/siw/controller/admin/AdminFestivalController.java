@@ -20,22 +20,22 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/admin/festivals")
 @RequiredArgsConstructor
 public class AdminFestivalController {
-	
+
 	private final FestivalService festivalService;
 	private final MovieService movieService;
-	
+
 	@GetMapping
 	public String list(Model model) {
 		model.addAttribute("festivals", festivalService.findAll());
-		return"list";
+		return "list";
 	}
-	
+
 	@GetMapping("/new")
 	public String newForm(Model model) {
 		model.addAttribute("festivalForm", new FestivalFormDTO());
 		return "form";
 	}
-	
+
 	@GetMapping("/{id}/edit")
 	public String editForm(@PathVariable Long id, Model model) {
 		Festival f = festivalService.findById(id);
@@ -50,11 +50,11 @@ public class AdminFestivalController {
 		model.addAttribute("festivalForm", form);
 		return "form";
 	}
-	
+
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("festivalForm") FestivalFormDTO form, BindingResult binding) {
         if (binding.hasErrors()) {
-            return "admin/festivals/form";
+            return "admin/festival-form";
         }
         if (form.getId() == null) {
             festivalService.create(form);
@@ -63,21 +63,21 @@ public class AdminFestivalController {
         }
         return "redirect:/admin/festivals";
     }
-	
+
 	@PostMapping("/{id}/delete")
 	public String delete(@PathVariable Long id) {
 		festivalService.delete(id);
 		return "redirect:/admin/festivals";
 	}
-	
-	@GetMapping("/{id}/film")
+
+	@GetMapping("/{id}/movies")
     public String manageMovie(@PathVariable Long id, Model model) {
         model.addAttribute("festival", festivalService.findByIdWithMovie(id));
         model.addAttribute("allMovies", movieService.findAll());
-        return "admin/festival/movies";
+        return "admin/festival-movies";
     }
 
-    @PostMapping("/{id}/movies/{filmId}/associa")
+    @PostMapping("/{id}/movies/{movieId}/associa")
     public String matchMovie(@PathVariable Long id, @PathVariable Long movieId) {
         festivalService.matchMovie(id, movieId);
         return "redirect:/admin/festivals/" + id + "/movies";
@@ -88,5 +88,5 @@ public class AdminFestivalController {
         festivalService.removeMovie(id, movieId);
         return "redirect:/admin/festivals/" + id + "/movies";
     }
-	
+
 }

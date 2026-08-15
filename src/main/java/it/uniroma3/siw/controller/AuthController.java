@@ -14,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/auth")
 public class AuthController {
-	
+
 	private final UserService userService;
-	
-	
+
+
 	@GetMapping("/login")
 	public String loginForm() {
 		return "login";
@@ -37,6 +37,6 @@ public class AuthController {
             model.addAttribute("error", ex.getMessage());
             return "register";
         }
-        return "redirect:/login?registered";
+        return "redirect:/auth/login?registered";
     }
 }

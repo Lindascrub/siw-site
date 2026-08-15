@@ -1,12 +1,5 @@
 package it.uniroma3.siw.service;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import it.uniroma3.siw.exception.ResourceNotFoundException;
 import it.uniroma3.siw.model.Festival;
 import it.uniroma3.siw.model.Movie;
@@ -14,17 +7,21 @@ import it.uniroma3.siw.modelDTO.FestivalFormDTO;
 import it.uniroma3.siw.repository.FestivalRepository;
 import it.uniroma3.siw.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
-@RequiredArgsConstructor  
-@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FestivalService {
 
     private final FestivalRepository festivalRepository;
     private final MovieRepository movieRepository;
-    
+
     public List<Festival> findAll() {
-        return festivalRepository.findAllByOrderByStartDateDecr();
+        return festivalRepository.findAllByOrderByStartDateDesc();
     }
 
     public Festival findById(Long id) {
@@ -33,11 +30,10 @@ public class FestivalService {
     }
 
     public Festival findByIdWithMovie(Long id) {
-        return ((FestivalRepository) festivalRepository).findByIdWithMovie(id)
+        return festivalRepository.findByIdWithMovies(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Festival non trovato: id=" + id));
     }
 
-    
     @Transactional
     public Festival create(FestivalFormDTO form) {
         Festival f = new Festival();
@@ -54,13 +50,12 @@ public class FestivalService {
 
     @Transactional
     public void delete(Long id) {
-        Festival f = findById(id);
-        festivalRepository.delete(f);
+        festivalRepository.delete(findById(id));
     }
 
 
     @Transactional
-    public void associateMovie(Long festivalId, Long movieId) {
+    public void matchMovie(Long festivalId, Long movieId) {
         Festival festival = findById(festivalId);
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
@@ -70,14 +65,15 @@ public class FestivalService {
         }
     }
 
+    @Transactional
     public void removeMovie(Long festivalId, Long movieId) {
-    	  Festival festival = findById(festivalId);
-          Movie movie = movieRepository.findById(movieId)
-                  .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
-          movie.getFestivals().remove(festival);
-          movieRepository.save(movie);
-	}
-    
+        Festival festival = findById(festivalId);
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
+        movie.getFestivals().remove(festival);
+        movieRepository.save(movie);
+    }
+
     private void applyForm(Festival f, FestivalFormDTO form) {
         f.setName(form.getName());
         f.setYear(form.getYear());
@@ -86,6 +82,4 @@ public class FestivalService {
         f.setEndDate(form.getEndDate());
         f.setDescription(form.getDescription());
     }
-    
-  
 }

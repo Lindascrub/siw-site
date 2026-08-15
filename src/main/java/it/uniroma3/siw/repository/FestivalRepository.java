@@ -1,21 +1,17 @@
 package it.uniroma3.siw.repository;
 
-
-import java.util.List;
-import java.util.Optional;
-
+import it.uniroma3.siw.model.Festival;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import it.uniroma3.siw.model.Festival;
+import java.util.List;
+import java.util.Optional;
 
 public interface FestivalRepository extends JpaRepository<Festival, Long> {
 
-	List<Festival> findAllByOrderByStartDateDecr();
+    List<Festival> findAllByOrderByStartDateDesc();
 
-    @Query("SELECT DISTINCT f FROM Festival f LEFT JOIN FETCH f.movie where f.id = :id")
-    Optional<Festival> findByIdWithMovie(@Param("id") Long id);
-
-
+    @Query("select distinct f from Festival f left join fetch f.movies where f.id = :id")
+    Optional<Festival> findByIdWithMovies(@Param("id") Long id);
 }

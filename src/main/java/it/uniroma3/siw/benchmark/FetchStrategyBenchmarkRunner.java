@@ -39,7 +39,7 @@ public class FetchStrategyBenchmarkRunner implements CommandLineRunner {
                     "Avviare prima l'applicazione senza il profilo 'benchmark' per popolare i dati di esempio.");
             return;
         }
-        
+
         Long festivalId = festivalOpt.get().getId();
 
         System.out.println();
@@ -52,7 +52,7 @@ public class FetchStrategyBenchmarkRunner implements CommandLineRunner {
         System.out.println();
         System.out.println("Nota: la strategia LAZY genera 1 query per il festival/film piu' 1 query " +
                 "aggiuntiva per ciascun regista distinto acceduto (problema N+1), perche' l'associazione " +
-                "Film.regista e' marcata EAGER ma le query JPQL non aggiungono automaticamente il join SQL: " +
+                "Movie.director e' marcata EAGER ma le query JPQL non aggiungono automaticamente il join SQL: " +
                 "Hibernate la inizializza con una SELECT separata per ogni film. Le strategie JOIN FETCH ed " +
                 "EntityGraph risolvono il problema con un'unica query.");
         System.out.println();
@@ -66,7 +66,7 @@ public class FetchStrategyBenchmarkRunner implements CommandLineRunner {
 
         long start = System.nanoTime();
         List<Movie> risultato = operazione.get();
-       
+
         risultato.forEach(f -> f.getDirector().getName());
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
 

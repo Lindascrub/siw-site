@@ -1,157 +1,76 @@
 package it.uniroma3.siw.service;
 
+import it.uniroma3.siw.exception.DuplicateReviewException;
+import it.uniroma3.siw.exception.ForbiddenOperationException;
+import it.uniroma3.siw.exception.ResourceNotFoundException;
 import it.uniroma3.siw.model.Movie;
 import it.uniroma3.siw.model.Review;
 import it.uniroma3.siw.model.User;
 import it.uniroma3.siw.modelDTO.ReviewCreateDTO;
+import it.uniroma3.siw.repository.MovieRepository;
 import it.uniroma3.siw.repository.ReviewRepository;
-import it.uniroma3.siw.security.UserDetails;
-import jakarta.validation.Valid;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import it.uniroma3.siw.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReviewService {
-    
-    @Autowired
-    private ReviewRepository reviewRepository;
-    
-    @Autowired
-    private MovieService movieService;
-    
-    @Autowired
-    private UserService userService;
-    
-    
-    @Transactional(readOnly = true)
-    public List<Review> findAll() {
-        return reviewRepository.findAll();
-    }
-    
-    @Transactional(readOnly = true)
-    public Optional<Review> findById(Long id) {
-        return reviewRepository.findById(id);
-    }
-    
-    @Transactional(readOnly = true)
+
+    private final ReviewRepository reviewRepository;
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+
     public List<Review> findByMovie(Long movieId) {
-        return reviewRepository.findByMovieId(movieId);
+        return reviewRepository.findByMovieIdOrderByDateDesc(movieId);
     }
-    
-    @Transactional(readOnly = true)
-    public List<Review> findByMovieWithUser(Long movieId) {
-        return reviewRepository.findByMovieWithUser(movieId);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Review> findByUser(Long userId) {
-        return reviewRepository.findByUserId(userId);
-    }
-    
-    @Transactional(readOnly = true)
-    public Page<Review> findByMoviePaginated(Long movieId, Pageable pageable) {
-        return reviewRepository.findByMovieId(movieId, pageable);
-    }
-    
-    @Transactional(readOnly = true)
-    public Double getAverageRating(Long movieId) {
-        return reviewRepository.getAverageRating(movieId);
-    }
-    
-    @Transactional(readOnly = true)
-    public Long countByMovie(Long movieId) {
-        return reviewRepository.countByMovieId(movieId);
-    }
-    
-    @Transactional(readOnly = true)
-    public boolean hasUserReviewedMovie(Long userId, Long movieId) {
-        return reviewRepository.existsByUserIdAndMovieId(userId, movieId);
-    }
-    public Review createReview(Review review, Long userId, Long movieId) {
-        // Verifica che l'utente non abbia già recensito questo film
-        if (reviewRepository.existsByUserIdAndMovieId(userId, movieId)) {
-            throw new RuntimeException("Hai già recensito questo film");
-        }
-        
- 
-        User user = userService.findById(userId)
-            .orElseThrow(() -> new RuntimeException("Utente non trovato"));
-        Movie movie = movieService.findById(movieId)
-        	    .orElseThrow(() -> new RuntimeException("Film non trovato"));
-     
-        review.setUser(user);
-        review.setMovie(movie);
-        review.setDate(LocalDate.now());
-        
-        return reviewRepository.save(review);
-    }
-    
-    public Review updateReview(Review review, Long userId) {
 
-        Review existing = reviewRepository.findById(review.getId())
-            .orElseThrow(() -> new RuntimeException("Recensione non trovata"));
-        
-
-        if (!existing.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Non sei autorizzato a modificare questa recensione");
-        }
-        
-        existing.setReview(review.getReview());
-        existing.setVote(review.getVote());
-        
-        return reviewRepository.save(existing);
+    public Review findById(Long id) {
+        return reviewRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recensione non trovata: id=" + id));
     }
-    
-    public void deleteReview(Long reviewId, Long userId) {
-        Review existing = reviewRepository.findById(reviewId)
-            .orElseThrow(() -> new RuntimeException("Recensione non trovata"));
 
-        if (!existing.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Non sei autorizzato a eliminare questa recensione");
-        }
-        
-        reviewRepository.delete(existing);
-    }
-    
     @Transactional
-    public Review create(Long filmId, Object object, ReviewCreateDTO dto) {
-        if (recensioneRepository.existsByFilmIdAndUtenteId(filmId, object)) {
+    public Review create(Long movieId, Long userId, ReviewCreateDTO dto) {
+        if (reviewRepository.existsByMovieIdAndUserId(movieId, userId)) {
             throw new DuplicateReviewException("Hai gia' inserito una recensione per questo film");
         }
-        Film film = filmRepository.findById(filmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + filmId));
-        Utente utente = utenteRepository.findById(object)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente non trovato: id=" + utenteId));
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + movieId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utente non trovato: id=" + userId));
 
-        Recensione r = new Recensione();
-        r.setTesto(dto.testo());
-        r.setVoto(dto.voto());
-        r.setFilm(film);
-        r.setUtente(utente);
-        return recensioneRepository.save(r);
+        Review r = new Review();
+        r.setText(dto.text());
+        r.setVote(dto.vote());
+        r.setMovie(movie);
+        r.setUser(user);
+        return reviewRepository.save(r);
     }
 
-	public Review update(Long id, Object id2, @Valid ReviewCreateDTO dto) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Transactional
+    public Review update(Long id, Long userId, ReviewCreateDTO dto) {
+        Review r = findById(id);
+        assertOwner(r, userId);
+        r.setText(dto.text());
+        r.setVote(dto.vote());
+        return reviewRepository.save(r);
+    }
 
-	public void delete(Long id, Object id2) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Transactional
+    public void delete(Long id, Long userId) {
+        Review r = findById(id);
+        assertOwner(r, userId);
+        reviewRepository.delete(r);
+    }
 
+    private void assertOwner(Review r, Long userId) {
+        if (!r.getUser().getId().equals(userId)) {
+            throw new ForbiddenOperationException("Non puoi modificare o eliminare una recensione di un altro utente");
+        }
+    }
 }
-
-    

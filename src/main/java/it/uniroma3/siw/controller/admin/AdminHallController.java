@@ -16,6 +16,7 @@ import it.uniroma3.siw.service.HallService;
 import it.uniroma3.siw.service.MovieService;
 import it.uniroma3.siw.service.ScreeningService;
 
+
 @Controller
 @RequestMapping("/admin/halls")
 @RequiredArgsConstructor
@@ -26,13 +27,13 @@ public class AdminHallController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("sale", hallService.findAll());
+        model.addAttribute("halls", hallService.findAll());
         return "list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("salaForm", new HallFormDTO());
+        model.addAttribute("hallForm", new HallFormDTO());
         return "form";
     }
 
@@ -45,13 +46,13 @@ public class AdminHallController {
         form.setAddress(h.getAddress());
         form.setCapacity(h.getCapacity());
         model.addAttribute("hallForm", form);
-        return "form";
+        return "admin/hall-form";
     }
 
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("hallForm") HallFormDTO form, BindingResult binding) {
         if (binding.hasErrors()) {
-            return "form";
+            return "admin/hall-form";
         }
         if (form.getId() == null) {
         	hallService.create(form);

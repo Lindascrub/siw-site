@@ -34,7 +34,7 @@ public class AdminMovieController {
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("movieForm", new MovieFormDTO());
-        model.addAttribute("registi", directorService.findAll());
+        model.addAttribute("directors", directorService.findAll());
         return "form";
     }
 
@@ -55,10 +55,10 @@ public class AdminMovieController {
     }
 
     @PostMapping("/save")
-    public String save(@Valid @ModelAttribute("movieForm") FestivalFormDTO form, BindingResult binding, Model model) {
+    public String save(@Valid @ModelAttribute("movieForm") MovieFormDTO form, BindingResult binding, Model model) {
         if (binding.hasErrors()) {
             model.addAttribute("directors", directorService.findAll());
-            return "form";
+            return "admin/movie-form";
         }
         if (form.getId() == null) {
         	movieService.create(form);

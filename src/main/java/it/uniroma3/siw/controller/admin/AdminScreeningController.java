@@ -57,7 +57,7 @@ public class AdminScreeningController {
     }
 
     @PostMapping("/save")
-    public String save(@Valid @ModelAttribute("proiezioneForm") ScreeningFormDTO form, BindingResult binding, Model model) {
+    public String save(@Valid @ModelAttribute("screeningForm") ScreeningFormDTO form, BindingResult binding, Model model) {
         if (binding.hasErrors()) {
             addReferenceData(model);
             return "form";
@@ -68,13 +68,12 @@ public class AdminScreeningController {
             } else {
             	screeningService.update(form.getId(), form);
             }
-            return "redirect:/festival/" + form.getFestivalId() + "/programms";
         } catch (BusinessRuleException e) {
-            binding.reject("proiezione.sala.nonDisponibile", e.getMessage());
+            binding.reject("screening.hall.notAvailable", e.getMessage());
             addReferenceData(model);
-            return "/form";
+            return "admin/screening-form";
         } catch (ResourceNotFoundException e) {
-            binding.reject("proiezione.entita.nonTrovata", e.getMessage());
+            binding.reject("screening.entity.notFound", e.getMessage());
             addReferenceData(model);
             return "form";
         }

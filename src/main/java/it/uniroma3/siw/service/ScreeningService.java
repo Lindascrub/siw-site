@@ -1,129 +1,119 @@
 package it.uniroma3.siw.service;
 
-import java.time.LocalTime;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import it.uniroma3.siw.exception.BusinessRuleException;
+import it.uniroma3.siw.exception.ResourceNotFoundException;
+import it.uniroma3.siw.model.*;
+import it.uniroma3.siw.modelDTO.ScreeningFormDTO;
+import it.uniroma3.siw.repository.FestivalRepository;
+import it.uniroma3.siw.repository.HallRepository;
+import it.uniroma3.siw.repository.MovieRepository;
+import it.uniroma3.siw.repository.ScreeningRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import it.uniroma3.siw.model.Festival;
-import it.uniroma3.siw.model.Hall;
-import it.uniroma3.siw.model.Movie;
-import it.uniroma3.siw.model.Screening;
-import it.uniroma3.siw.model.Screening.Status;
-import it.uniroma3.siw.modelDTO.ScreeningFormDTO;
-import it.uniroma3.siw.repository.ScreeningRepository;
-import jakarta.validation.Valid;
+import java.time.LocalTime;
+import java.util.List;
+
 
 @Service
-@Transactional
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ScreeningService {
-    
-    @Autowired
-    private ScreeningRepository screeningRepository;
-    
-    @Autowired
-    private FestivalService festivalService;
-    
-    @Autowired
-    private MovieService movieService;
-    
-    @Autowired
-    private HallService hallService;
-    
-    @Transactional(readOnly = true)
-    public List<Screening> findAll() {
-        return screeningRepository.findAll();
+
+    private static final int BUFFER_MINUTES = 15;
+
+    private final ScreeningRepository screeningRepository;
+    private final FestivalRepository festivalRepository;
+    private final MovieRepository movieRepository;
+    private final HallRepository hallRepository;
+
+    public List<Screening> findByFestival(Long festivalId) {
+        return screeningRepository.findByFestivalIdJoinFetch(festivalId);
     }
-    
-    @Transactional(readOnly = true)
+
     public Screening findById(Long id) {
         return screeningRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Proiezione non trovata con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Proiezione non trovata: id=" + id));
     }
-    
-    @Transactional(readOnly = true)
-    public List<Screening> findByFestival(Long festivalId) {
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Screening schedule(ScreeningFormDTO form) {
+        Festival festival = festivalRepository.findById(form.getFestivalId())
+                .orElseThrow(() -> new ResourceNotFoundException("Festival non trovato: id=" + form.getFestivalId()));
+        Movie movie = movieRepository.findById(form.getMovieId())
+                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + form.getMovieId()));
+        Hall hall = hallRepository.findById(form.getHallId())
+                .orElseThrow(() -> new ResourceNotFoundException("Sala non trovata: id=" + form.getHallId()));
+
+        checkAvailability(hall.getId(), form.getDate(), form.getTime(), movie.getDuration());
+
+        Screening s = new Screening();
+        s.setFestival(festival);
+        s.setMovie(movie);
+        s.setHall(hall);
+        s.setDate(form.getDate());
+        s.setTime(form.getTime());
+        s.setStatus(ScreeningStatus.SCHEDULED);
+
+        return screeningRepository.save(s);
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Screening update(Long id, ScreeningFormDTO form) {
+        Screening s = findById(id);
+
+        Festival festival = festivalRepository.findById(form.getFestivalId())
+                .orElseThrow(() -> new ResourceNotFoundException("Festival non trovato: id=" + form.getFestivalId()));
+        Movie movie = movieRepository.findById(form.getMovieId())
+                .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + form.getMovieId()));
+        Hall hall = hallRepository.findById(form.getHallId())
+                .orElseThrow(() -> new ResourceNotFoundException("Sala non trovata: id=" + form.getHallId()));
+
+        boolean slotChanged = !hall.getId().equals(s.getHall().getId())
+                || !form.getDate().equals(s.getDate())
+                || !form.getTime().equals(s.getTime());
+        if (slotChanged) {
+            checkAvailability(hall.getId(), form.getDate(), form.getTime(), movie.getDuration());
+        }
+
+        s.setFestival(festival);
+        s.setMovie(movie);
+        s.setHall(hall);
+        s.setDate(form.getDate());
+        s.setTime(form.getTime());
+        return screeningRepository.save(s);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        screeningRepository.delete(findById(id));
+    }
+
+    public List<Screening> findByFestivalLazy(Long festivalId) {
         return screeningRepository.findByFestivalId(festivalId);
     }
-    
-    @Transactional(readOnly = true)
-    public List<Screening> findByMovie(Long movieId) {
-        return screeningRepository.findByMovieId(movieId);
+
+    public List<Screening> findByFestivalJoinFetch(Long festivalId) {
+        return screeningRepository.findByFestivalIdJoinFetch(festivalId);
     }
-    
-    @Transactional(readOnly = true)
-    public List<Screening> findByStatus(ScreeningStatus status) {
-        return screeningRepository.findByStatus(status);
+
+    public List<Screening> findByFestivalEntityGraph(Long festivalId) {
+        return screeningRepository.findByFestivalIdEntityGraph(festivalId);
     }
-    
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Screening scheduleScreening(Screening screening) {
-        
-        // ✅ CORRETTO - i service restituiscono l'oggetto direttamente
-        Festival festival = festivalService.findById(screening.getFestival().getId());
-        Movie movie = movieService.findById(screening.getMovie().getId());
-        Hall hall = hallService.findById(screening.getHall().getId());
-        
-        // 2. Verifica che la proiezione sia nel periodo del festival
-        if (screening.getDate().isBefore(festival.getStart()) || 
-            screening.getDate().isAfter(festival.getEnd())) {
-            throw new IllegalArgumentException("La proiezione deve essere nel periodo del festival");
+
+    private void checkAvailability(Long hallId, java.time.LocalDate date, LocalTime time, int movieDurationMinutes) {
+        LocalTime startTime = time.minusMinutes(movieDurationMinutes + BUFFER_MINUTES);
+        LocalTime endTime = time.plusMinutes(movieDurationMinutes + BUFFER_MINUTES);
+        if (startTime.isAfter(time) || endTime.isBefore(time)) {
+            startTime = LocalTime.MIN;
+            endTime = LocalTime.MAX;
         }
-        
-        // 3. Calcola l'orario di fine (durata film + 15 min per cambio sala)
-        LocalTime endTime = screening.getTime().plusMinutes(movie.getDuration() + 15);
-        
-        // 4. Verifica disponibilità della sala (non sovrapposta)
-        List<Screening> overlapping = screeningRepository.findOverlappingScreenings(
-            hall.getId(),
-            screening.getDate(),
-            screening.getTime(),
-            endTime
-        );
-        
-        if (!overlapping.isEmpty()) {
-            throw new RuntimeException("Sala non disponibile per questo orario");
+        List<Screening> conflicts = screeningRepository.findConflictingScreenings(hallId, date, startTime, endTime);
+        if (!conflicts.isEmpty()) {
+            throw new BusinessRuleException(
+                    "La sala selezionata non e' disponibile nell'intervallo richiesto: esiste gia' una proiezione in conflitto.");
         }
-        
-        // 5. Imposta le associazioni e salva
-        screening.setFestival(festival);
-        screening.setMovie(movie);
-        screening.setHall(hall);
-        screening.setStatus(ScreeningStatus.SCHEDULED);
-        
-        return screeningRepository.save(screening);
     }
-    
-    public Screening updateScreening(Screening screening) {
-        Screening existing = screeningRepository.findById(screening.getId())
-            .orElseThrow(() -> new RuntimeException("Proiezione non trovata con id: " + screening.getId()));
-        
-        existing.setDate(screening.getDate());
-        existing.setTime(screening.getTime());
-        existing.setStatus(screening.getStatus());
-        
-        return screeningRepository.save(existing);
-    }
-    
-    public void deleteScreening(Long id) {
-        screeningRepository.deleteById(id);
-    }
-
-	public void schedule(@Valid ScreeningFormDTO form) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void update(Long id, @Valid ScreeningFormDTO form) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void delete(Long id) {
-		// TODO Auto-generated method stub
-		
-	}
 }

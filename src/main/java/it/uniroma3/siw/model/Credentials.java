@@ -1,5 +1,6 @@
 package it.uniroma3.siw.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,7 +37,7 @@ public class Credentials {
     @Column(nullable = false)
     private Role role = Role.USER; 
 
-	@OneToOne
+	@OneToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id", nullable = false, unique = true)
 	private User user;
 	

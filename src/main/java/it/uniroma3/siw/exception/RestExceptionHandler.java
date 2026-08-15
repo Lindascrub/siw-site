@@ -10,7 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(basePackages = "it.festival.controller.api")
+@RestControllerAdvice(basePackages = "it.uniroma3.siw.controller.api")
 public class RestExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)

@@ -15,24 +15,24 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/festivals")
 public class FestivalController {
-	
+
 	private final FestivalService festivalService;
 	private final ScreeningService screeningService;
-	
+
 	@GetMapping("/{id}")
 	public String detail(@PathVariable Long id, Model model) {
 		Festival festival = festivalService.findByIdWithMovie(id);
 		model.addAttribute("festival", festival);
 		model.addAttribute("movie", festival.getMovies());
-		return "festivals/detail";
+		return "festival/detail";
 	}
-	
-	@GetMapping("{id}/programms")
+
+	@GetMapping("/{id}/programms")
 	public String programms(@PathVariable Long id, Model model) {
 		Festival festival = festivalService.findById(id);
 		model.addAttribute("festival", festival);
 		model.addAttribute("screenings", screeningService.findByFestival(id));
-		return "festivals/programms";
+		return "festival/programms";
 	}
 
 }

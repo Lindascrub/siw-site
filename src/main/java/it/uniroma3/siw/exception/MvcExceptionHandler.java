@@ -9,9 +9,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 
 
-@ControllerAdvice(basePackages = "it.uniroma3.siw.festival.controller.web")
-public class MvcExeptionHandler {
-	
+@ControllerAdvice(basePackages = "it.uniroma3.siw.controller.web")
+public class MvcExceptionHandler {
+
 	@ExceptionHandler(ResourceNotFoundException.class)
 	 public ModelAndView handleNotFound(ResourceNotFoundException ex, HttpServletResponse response) {
         response.setStatus(HttpStatus.NOT_FOUND.value());
@@ -19,7 +19,7 @@ public class MvcExeptionHandler {
         mav.addObject("message", ex.getMessage());
         return mav;
     }
-	
+
 	 @ExceptionHandler({BusinessRuleException.class, DuplicateReviewException.class})
 	    public ModelAndView handleBusinessRule(RuntimeException ex, HttpServletResponse response) {
 	        response.setStatus(HttpStatus.CONFLICT.value());
