@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - Screenings')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container" style="max-width: 600px;">
+    <h1 th:text="${screeningForm.id} == null ? 'New screening' : 'Edit screening'">Screening</h1>
+    <form th:action="@{/admin/screenings/save}" th:object="${screeningForm}" method="post">
+        <input type="hidden" th:field="*{id}"/>
+        <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Festival</label>
+            <select class="form-select" th:field="*{festivalId}">
+                <option th:each="f : ${festivals}" th:value="${f.id}" th:text="${f.name}"></option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Movie</label>
+            <select class="form-select" th:field="*{movieId}">
+                <option th:each="m : ${moviesList}" th:value="${m.id}" th:text="${m.title}"></option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Hall</label>
+            <select class="form-select" th:field="*{hallId}">
+                <option th:each="h : ${halls}" th:value="${h.id}" th:text="${h.name}"></option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" th:field="*{date}"/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Time</label>
+            <input type="time" class="form-control" th:field="*{time}"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+</body>
+</html>

@@ -23,9 +23,6 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider(CustomUserDetailsService uds, PasswordEncoder encoder) {
-        // FIX (Spring Security 7 / Spring Boot 4): il costruttore senza
-        // argomenti e setUserDetailsService(...) sono stati rimossi, non
-        // solo deprecati. Lo UserDetailsService va passato al costruttore.
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(uds);
         provider.setPasswordEncoder(encoder);
         return provider;

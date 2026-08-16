@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - Festivals')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="container">
+    <h1>Manage Festivals</h1>
+    <a class="btn btn-success mb-3" th:href="@{/admin/festivals/new}">+ New festival</a>
+    <table class="table table-striped">
+        <thead><tr><th>Name</th><th>City</th><th>Year</th><th>Actions</th></tr></thead>
+        <tbody>
+        <tr th:each="f : ${festivals}">
+            <td th:text="${f.name}"></td>
+            <td th:text="${f.city}"></td>
+            <td th:text="${f.year}"></td>
+            <td>
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/admin/festivals/{id}/edit(id=${f.id})}">Edit</a>
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/festivals/{id}/movies(id=${f.id})}">Manage movies</a>
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/festivals/{id}/programms(id=${f.id})}">Program</a>
+                <form th:action="@{/admin/festivals/{id}/delete(id=${f.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
