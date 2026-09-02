@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>17</java.version>
+		<java.version>21</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -67,14 +67,12 @@
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
-		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
+		<!-- FIX: rimosso spring-boot-starter-web duplicato (era dichiarato
+		     insieme a spring-boot-starter-webmvc, che e' quello corretto per
+		     Spring Boot 4 - averli entrambi rischia auto-configurazioni MVC
+		     in conflitto). Rimossa anche la seconda dichiarazione duplicata
+		     di spring-boot-starter-data-jpa e di spring-boot-starter-security
+		     (erano presenti due volte ciascuna). -->
 		  <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -99,10 +97,6 @@
 		    <artifactId>lombok</artifactId>
 		    <version>1.18.30</version>
 		    <scope>provided</scope>
-		</dependency>
-		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 	</dependencies>
 

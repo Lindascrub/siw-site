@@ -12,6 +12,7 @@
         <a class="navbar-brand" th:href="@{/}">Movie Festival</a>
         <div class="navbar-nav me-auto">
             <a class="nav-link" th:href="@{/}">Festivals</a>
+            <a class="nav-link" th:href="@{/react/}">React App</a>
             <a class="nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/festivals}">Admin Festivals</a>
             <a class="nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/movies}">Admin Movies</a>
             <a class="nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/directors}">Admin Directors</a>

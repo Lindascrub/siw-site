@@ -14,6 +14,7 @@ import it.uniroma3.siw.exception.BusinessRuleException;
 import it.uniroma3.siw.exception.ResourceNotFoundException;
 import it.uniroma3.siw.model.Screening;
 import it.uniroma3.siw.modelDTO.ScreeningFormDTO;
+import it.uniroma3.siw.service.DirectorService;
 import it.uniroma3.siw.service.FestivalService;
 import it.uniroma3.siw.service.HallService;
 import it.uniroma3.siw.service.MovieService;
@@ -67,6 +68,9 @@ public class AdminScreeningController {
             } else {
             	screeningService.update(form.getId(), form);
             }
+            // FIX: mancava questo return - senza, il "percorso felice" (nessuna
+            // eccezione) cadeva alla fine del metodo senza ritornare nulla,
+            // motivo esatto dell'errore "missing return statement" del compilatore
             return "redirect:/festivals/" + form.getFestivalId() + "/programms";
         } catch (BusinessRuleException e) {
             binding.reject("screening.hall.notAvailable", e.getMessage());
