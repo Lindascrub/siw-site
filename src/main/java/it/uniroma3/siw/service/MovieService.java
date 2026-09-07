@@ -65,6 +65,15 @@ public class MovieService {
         movieRepository.delete(m);
     }
 
+    public Movie attachPoster(Long id, MultipartFile file) {
+        Movie movie = findById(id);
+        String filename = fileStorageService.store(file);
+        if (movie.getPosterFilename() != null) {
+            fileStorageService.delete(movie.getPosterFilename());
+        }
+        movie.setPosterFilename(filename);
+        return movieRepository.save(movie);
+    }
 
     public List<Movie> findByFestivalLazy(Long festivalId) {
         return movieRepository.findByFestivalIdLazy(festivalId);

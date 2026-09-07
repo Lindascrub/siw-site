@@ -13,5 +13,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	  List<Review> findByMovieIdOrderByDateDesc(Long movieId);
 	  Optional<Review> findByMovieIdAndUserId(Long movieId, Long userId);
 	  boolean existsByMovieIdAndUserId(Long movieId, Long userId);
-
+	  List<Review> findByUserIdOrderByDateDesc(Long userId);
+	  
 }

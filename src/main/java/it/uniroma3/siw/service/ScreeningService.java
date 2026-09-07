@@ -116,4 +116,7 @@ public class ScreeningService {
                     "La sala selezionata non e' disponibile nell'intervallo richiesto: esiste gia' una proiezione in conflitto.");
         }
     }
+    public List<Screening> findAll() {
+        return screeningRepository.findAll();
+    }
 }

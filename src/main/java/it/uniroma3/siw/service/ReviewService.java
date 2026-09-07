@@ -73,4 +73,8 @@ public class ReviewService {
             throw new ForbiddenOperationException("Non puoi modificare o eliminare una recensione di un altro utente");
         }
     }
+    
+    public List<Review> findByUser(Long userId) {
+        return reviewRepository.findByUserIdOrderByDateDesc(userId);
+    }
 }
