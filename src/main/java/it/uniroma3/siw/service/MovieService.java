@@ -11,6 +11,7 @@ import it.uniroma3.siw.repository.ScreeningRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final DirectorRepository directorRepository;
     private final ScreeningRepository screeningRepository;
+    private final FileStorageService fileStorageService;
 
     public List<Movie> findAll() {
         return movieRepository.findAll();

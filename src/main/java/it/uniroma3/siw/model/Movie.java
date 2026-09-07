@@ -45,6 +45,9 @@ public class Movie {
 
 	@Column(length = 100)
 	private String contryProduction;
+
+	@Column(name = "poster_filename", length = 255)
+	private String posterFilename;
 	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "director_id", nullable = false)

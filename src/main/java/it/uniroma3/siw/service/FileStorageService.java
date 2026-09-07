@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +24,6 @@ import java.util.UUID;
 public class FileStorageService {
 
     private final Path uploadDir;
-    private final FileStorageService fileStorageService;
 
     public FileStorageService(@Value("${app.upload.dir:./uploads}") String uploadDirPath) {
         this.uploadDir = Paths.get(uploadDirPath).toAbsolutePath().normalize();
