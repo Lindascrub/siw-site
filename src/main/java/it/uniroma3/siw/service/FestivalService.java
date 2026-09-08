@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -83,13 +84,15 @@ public class FestivalService {
         f.setEndDate(form.getEndDate());
         f.setDescription(form.getDescription());
     }
+    @Transactional
     public Festival attachImage(Long id, MultipartFile file) {
         Festival festival = findById(id);
         String filename = fileStorageService.store(file);
         festival.getImageFilenames().add(filename);
         return festivalRepository.save(festival);
     }
-     
+
+    @Transactional
     public Festival removeImage(Long id, String filename) {
         Festival festival = findById(id);
         festival.getImageFilenames().remove(filename);
