@@ -49,7 +49,7 @@ public class AuthApiController {
     @PostMapping("/api/auth/register")
     public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequestDTO dto) {
         userService.register(dto.username(), dto.password(), dto.name(), dto.surname(), dto.email());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.noContent().build();
     }
 
     private CurrentUserDTO toDto(UserDetails principal) {
