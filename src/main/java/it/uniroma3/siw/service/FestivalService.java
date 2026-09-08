@@ -9,7 +9,7 @@ import it.uniroma3.siw.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
@@ -19,7 +19,8 @@ public class FestivalService {
 
     private final FestivalRepository festivalRepository;
     private final MovieRepository movieRepository;
-
+    private final FileStorageService fileStorageService; 
+    
     public List<Festival> findAll() {
         return festivalRepository.findAllByOrderByStartDateDesc();
     }
@@ -81,5 +82,18 @@ public class FestivalService {
         f.setStartDate(form.getStartDate());
         f.setEndDate(form.getEndDate());
         f.setDescription(form.getDescription());
+    }
+    public Festival attachImage(Long id, MultipartFile file) {
+        Festival festival = findById(id);
+        String filename = fileStorageService.store(file);
+        festival.getImageFilenames().add(filename);
+        return festivalRepository.save(festival);
+    }
+     
+    public Festival removeImage(Long id, String filename) {
+        Festival festival = findById(id);
+        festival.getImageFilenames().remove(filename);
+        fileStorageService.delete(filename);
+        return festivalRepository.save(festival);
     }
 }

@@ -16,6 +16,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.JoinColumn;
+import java.util.ArrayList;
 
 @Entity
 @Getter
@@ -53,4 +58,10 @@ public class Festival {
 	@OneToMany(mappedBy = "festival", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Screening> screenings = new ArrayList<>();
 
+	@ElementCollection
+	@CollectionTable(name = "festival_images", joinColumns = @JoinColumn(name = "festival_id"))
+	@OrderColumn(name = "position")
+	@Column(name = "filename", length = 255)
+	private List<String> imageFilenames = new ArrayList<>();
+	 
 }

@@ -3,6 +3,7 @@ package it.uniroma3.siw.modelDTO;
 import java.time.LocalDate;
 
 import it.uniroma3.siw.model.Festival;
+import java.util.List;
 
 public record FestivalDTO(
 		Long id, 
