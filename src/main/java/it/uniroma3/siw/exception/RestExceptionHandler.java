@@ -2,6 +2,7 @@ package it.uniroma3.siw.exception;
 
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -50,6 +51,18 @@ public class RestExceptionHandler {
                 .toList();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError(400, "Bad Request", "Errore di validazione", details));
+    }
+
+    /**
+     * Cattura violazioni di vincolo a livello DB (es. cancellare un utente che
+     * ha ancora recensioni collegate) non gia' intercettate da una regola di
+     * business esplicita nel Service Layer: evita di far trapelare un 500 con
+     * lo stack trace SQL grezzo fino al client.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleIntegrityViolation(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError(409, "Conflict", "Impossibile completare l'operazione: la risorsa è ancora referenziata da altri dati."));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
