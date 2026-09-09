@@ -24,6 +24,9 @@ public interface ScreeningRepository extends JpaRepository<Screening, Long> {
     @Query("select s from Screening s where s.festival.id = :festivalId order by s.date, s.time")
     List<Screening> findByFestivalIdEntityGraph(@Param("festivalId") Long festivalId);
 
+    @Query("select s from Screening s join fetch s.hall join fetch s.festival where s.movie.id = :movieId order by s.date, s.time")
+    List<Screening> findByMovieIdJoinFetch(@Param("movieId") Long movieId);
+
     /** Usata per il controllo di disponibilita' di una sala prima di programmare una proiezione. */
     @Query("select s from Screening s where s.hall.id = :hallId and s.date = :date " +
             "and s.time between :startTime and :endTime and s.status <> it.uniroma3.siw.model.ScreeningStatus.CANCELLED")

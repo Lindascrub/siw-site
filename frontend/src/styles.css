@@ -1,0 +1,19 @@
+@import "tailwindcss" source(none);
+
+/* Stili globali di base: il resto dell'interfaccia usa il tema MUI (src/theme.ts). */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+}

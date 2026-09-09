@@ -53,11 +53,9 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/", "/auth/login", "/auth/register").permitAll()
-                .requestMatchers("/react/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                .requestMatchers(HttpMethod.GET, "/festivals/**", "/movies/**").permitAll()
 
-                .requestMatchers(HttpMethod.GET, "/api/festivals/**", "/api/movies/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/festivals", "/api/festivals/**", "/api/movies", "/api/movies/**").permitAll()
 
                 .requestMatchers(HttpMethod.POST, "/api/movies/*/reviews").hasRole("USER")
                 .requestMatchers(HttpMethod.PUT, "/api/reviews/**").hasRole("USER")

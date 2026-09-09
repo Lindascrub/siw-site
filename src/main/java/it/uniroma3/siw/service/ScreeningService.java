@@ -33,6 +33,10 @@ public class ScreeningService {
         return screeningRepository.findByFestivalIdJoinFetch(festivalId);
     }
 
+    public List<Screening> findByMovie(Long movieId) {
+        return screeningRepository.findByMovieIdJoinFetch(movieId);
+    }
+
     public Screening findById(Long id) {
         return screeningRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proiezione non trovata: id=" + id));

@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend (React) ###
+frontend/node_modules/
+frontend/dist/
+frontend/.tanstack/
+frontend/tsconfig.tsbuildinfo
+frontend/.env
+frontend/.env.local

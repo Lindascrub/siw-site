@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final UserService userService;
-//cacca
 
 	@GetMapping("/login")
 	public String loginForm() {
