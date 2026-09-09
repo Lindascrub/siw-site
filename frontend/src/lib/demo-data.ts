@@ -61,6 +61,8 @@ export const demoMovies: MovieDTO[] = [
     posterFilename: null,
     festivals: [],
     screenings: [],
+    avgRating: null,
+    reviewCount: 0,
   },
   {
     id: 2,
@@ -73,6 +75,8 @@ export const demoMovies: MovieDTO[] = [
     posterFilename: null,
     festivals: [],
     screenings: [],
+    avgRating: null,
+    reviewCount: 0,
   },
   {
     id: 3,
@@ -85,6 +89,8 @@ export const demoMovies: MovieDTO[] = [
     posterFilename: null,
     festivals: [],
     screenings: [],
+    avgRating: null,
+    reviewCount: 0,
   },
   {
     id: 4,
@@ -97,6 +103,8 @@ export const demoMovies: MovieDTO[] = [
     posterFilename: null,
     festivals: [],
     screenings: [],
+    avgRating: null,
+    reviewCount: 0,
   },
 ];
 

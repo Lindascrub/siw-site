@@ -14,13 +14,17 @@ public record MovieDTO(
 		DirectorDTO director,
 		String posterFilename,
 		List<FestivalDTO> festivals,
-		List<MovieScreeningDTO> screenings
+		List<MovieScreeningDTO> screenings,
+		Double avgRating,
+		Long reviewCount
 		) {
 
 	/**
 	 * Usata per le liste (catalogo, pannello admin, festival->film): non tocca
 	 * le collezioni LAZY (festivals/screenings) per evitare N+1 query, restano
-	 * vuote. Il dettaglio di un singolo film usa invece {@link #fromDetail}.
+	 * vuote. Le statistiche recensioni partono a 0/null: chi chiama arricchisce
+	 * con {@link #withStats} dopo una query aggregata separata (vedi
+	 * MovieApiController), non con un accesso lazy per film.
 	 */
 	public static MovieDTO from(Movie m) {
 		return new MovieDTO(
@@ -33,7 +37,9 @@ public record MovieDTO(
 				DirectorDTO.from(m.getDirector()),
 				m.getPosterFilename(),
 				List.of(),
-				List.of());
+				List.of(),
+				null,
+				0L);
 	}
 
 	/**
@@ -52,6 +58,14 @@ public record MovieDTO(
 				DirectorDTO.from(m.getDirector()),
 				m.getPosterFilename(),
 				m.getFestivals().stream().map(FestivalDTO::from).toList(),
-				screenings);
+				screenings,
+				null,
+				0L);
+	}
+
+	/** Copia arricchita con le statistiche delle recensioni (vedi ReviewRepository.aggregateForMovies). */
+	public MovieDTO withStats(Double avgRating, Long reviewCount) {
+		return new MovieDTO(id, title, year, duration, genre, contryProduction, director, posterFilename,
+				festivals, screenings, avgRating, reviewCount == null ? 0L : reviewCount);
 	}
 }

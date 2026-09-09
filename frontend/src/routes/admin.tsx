@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type ReactNode, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode, type ChangeEvent } from "react";
 
 import {
   Alert,
@@ -9,9 +9,13 @@ import {
   Chip,
   CircularProgress,
   Container,
+  FormControl,
   IconButton,
+  InputLabel,
   MenuItem,
+  Pagination,
   Paper,
+  Select,
   Stack,
   Table as MuiTable,
   TableBody,
@@ -25,6 +29,8 @@ import {
   Typography,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+
+import { usePagedTable } from "../lib/usePagedTable";
 
 import { useAuth } from "../lib/auth";
 import {
@@ -313,6 +319,53 @@ function Row({ children }: { children: ReactNode }) {
   return <TableRow sx={{ "& td": { borderBottom: "1px solid", borderColor: "divider" } }}>{children}</TableRow>;
 }
 
+/** Barra filtri/ordinamento sopra una tabella admin. */
+function TableToolbar({ children }: { children: ReactNode }) {
+  return (
+    <Stack direction="row" spacing={1.5} sx={{ mb: 2, flexWrap: "wrap", alignItems: "center" }}>
+      {children}
+    </Stack>
+  );
+}
+
+/** Riga di paginazione (max 20 per pagina) sotto una tabella admin. Non renderizza nulla con una sola pagina. */
+function TablePager({
+  page,
+  totalPages,
+  totalElements,
+  label,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  totalElements: number;
+  label: string;
+  onChange: (page: number) => void;
+}) {
+  return (
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{ mt: 2, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        {totalElements} {label}
+        {totalPages > 1 ? ` · pagina ${page + 1} di ${totalPages}` : ""}
+      </Typography>
+      {totalPages > 1 && (
+        <Pagination
+          count={totalPages}
+          page={page + 1}
+          onChange={(_e, value) => onChange(value - 1)}
+          size="small"
+          color="primary"
+          shape="rounded"
+        />
+      )}
+    </Stack>
+  );
+}
+
 function RowActions({
   onEdit,
   onDelete,
@@ -367,7 +420,7 @@ function PosterCell({
   }
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
       <Box
         sx={{
           width: 40,
@@ -406,14 +459,46 @@ const emptyMovie: MovieForm = {
   directorId: null,
 };
 
+const MOVIE_ALL_GENRES = "__all__";
+type MovieSort = "title-asc" | "title-desc" | "year-desc" | "year-asc" | "duration-asc" | "duration-desc";
+
 function MoviesTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<MovieForm>(emptyMovie);
+  const [search, setSearch] = useState("");
+  const [genre, setGenre] = useState(MOVIE_ALL_GENRES);
+  const [sort, setSort] = useState<MovieSort>("title-asc");
 
   const submit = () =>
     void run(async () => {
       await saveMovie(demo, form);
       setForm(emptyMovie);
     }, "Film salvato.");
+
+  const genres = useMemo(
+    () => Array.from(new Set(data.movies.map((m) => m.genre).filter((g): g is string => !!g))).sort(),
+    [data.movies],
+  );
+
+  const filteredSorted = useMemo(() => {
+    const [field, dirStr] = sort.split("-") as ["title" | "year" | "duration", "asc" | "desc"];
+    const dir = dirStr === "desc" ? -1 : 1;
+    const q = search.trim().toLowerCase();
+    return [...data.movies]
+      .filter((m) => genre === MOVIE_ALL_GENRES || m.genre === genre)
+      .filter(
+        (m) =>
+          !q ||
+          m.title.toLowerCase().includes(q) ||
+          (m.director ? `${m.director.name} ${m.director.surname}`.toLowerCase().includes(q) : false),
+      )
+      .sort((a, b) => {
+        const av = a[field] ?? "";
+        const bv = b[field] ?? "";
+        return av < bv ? -dir : av > bv ? dir : 0;
+      });
+  }, [data.movies, search, genre, sort]);
+
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
 
   return (
     <Section
@@ -488,39 +573,74 @@ function MoviesTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Locandina", "Titolo", "Anno", "Genere", "Regista", ""]}>
-          {data.movies.map((m) => (
-            <Row key={m.id}>
-              <TableCell>
-                <PosterCell
-                  movieId={m.id}
-                  posterFilename={m.posterFilename}
-                  onUpload={(file) => run(() => uploadPoster(demo, m.id, file), "Locandina caricata.")}
-                />
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{m.title}</TableCell>
-              <TableCell>{m.year ?? "—"}</TableCell>
-              <TableCell>{m.genre ?? "—"}</TableCell>
-              <TableCell>{m.director ? `${m.director.name} ${m.director.surname}` : "—"}</TableCell>
-              <TableCell>
-                <RowActions
-                  onEdit={() =>
-                    setForm({
-                      id: m.id,
-                      title: m.title,
-                      year: m.year,
-                      duration: m.duration,
-                      genre: m.genre ?? "",
-                      contryProduction: m.contryProduction ?? "",
-                      directorId: m.director?.id ?? null,
-                    })
-                  }
-                  onDelete={() => confirmAndRun(`il film “${m.title}”`, () => deleteMovie(demo, m.id))}
-                />
-              </TableCell>
-            </Row>
-          ))}
-        </Table>
+        <>
+          <TableToolbar>
+            <TextField
+              size="small"
+              label="Cerca"
+              placeholder="Titolo o regista…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ minWidth: 200 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>Genere</InputLabel>
+              <Select label="Genere" value={genre} onChange={(e) => setGenre(e.target.value)}>
+                <MenuItem value={MOVIE_ALL_GENRES}>Tutti i generi</MenuItem>
+                {genres.map((g) => (
+                  <MenuItem key={g} value={g}>
+                    {g}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Ordina per</InputLabel>
+              <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as MovieSort)}>
+                <MenuItem value="title-asc">Titolo (A-Z)</MenuItem>
+                <MenuItem value="title-desc">Titolo (Z-A)</MenuItem>
+                <MenuItem value="year-desc">Anno (recenti prima)</MenuItem>
+                <MenuItem value="year-asc">Anno (vecchi prima)</MenuItem>
+                <MenuItem value="duration-asc">Durata (crescente)</MenuItem>
+                <MenuItem value="duration-desc">Durata (decrescente)</MenuItem>
+              </Select>
+            </FormControl>
+          </TableToolbar>
+          <Table headers={["Locandina", "Titolo", "Anno", "Genere", "Regista", ""]}>
+            {pageItems.map((m) => (
+              <Row key={m.id}>
+                <TableCell>
+                  <PosterCell
+                    movieId={m.id}
+                    posterFilename={m.posterFilename}
+                    onUpload={(file) => run(() => uploadPoster(demo, m.id, file), "Locandina caricata.")}
+                  />
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{m.title}</TableCell>
+                <TableCell>{m.year ?? "—"}</TableCell>
+                <TableCell>{m.genre ?? "—"}</TableCell>
+                <TableCell>{m.director ? `${m.director.name} ${m.director.surname}` : "—"}</TableCell>
+                <TableCell>
+                  <RowActions
+                    onEdit={() =>
+                      setForm({
+                        id: m.id,
+                        title: m.title,
+                        year: m.year,
+                        duration: m.duration,
+                        genre: m.genre ?? "",
+                        contryProduction: m.contryProduction ?? "",
+                        directorId: m.director?.id ?? null,
+                      })
+                    }
+                    onDelete={() => confirmAndRun(`il film “${m.title}”`, () => deleteMovie(demo, m.id))}
+                  />
+                </TableCell>
+              </Row>
+            ))}
+          </Table>
+          <TablePager page={page} totalPages={totalPages} totalElements={totalElements} label="film" onChange={setPage} />
+        </>
       }
     />
   );
@@ -538,15 +658,48 @@ const emptyFestival: FestivalForm = {
   description: "",
 };
 
+const FESTIVAL_ALL = "__all__";
+type FestivalSort = "startDate-asc" | "startDate-desc" | "name-asc" | "name-desc" | "year-desc" | "year-asc";
+
 function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<FestivalForm>(emptyFestival);
   const [moviesPanelFor, setMoviesPanelFor] = useState<number | null>(null);
+  const [city, setCity] = useState(FESTIVAL_ALL);
+  const [year, setYear] = useState(FESTIVAL_ALL);
+  const [sort, setSort] = useState<FestivalSort>("startDate-asc");
 
   const submit = () =>
     void run(async () => {
       await saveFestival(demo, form);
       setForm(emptyFestival);
     }, "Festival salvato.");
+
+  const cities = useMemo(
+    () => Array.from(new Set(data.festivals.map((f) => f.city).filter((c): c is string => !!c))).sort(),
+    [data.festivals],
+  );
+  const years = useMemo(
+    () =>
+      Array.from(new Set(data.festivals.map((f) => f.year).filter((y): y is number => y !== null))).sort(
+        (a, b) => b - a,
+      ),
+    [data.festivals],
+  );
+
+  const filteredSorted = useMemo(() => {
+    const [field, dirStr] = sort.split("-") as ["startDate" | "name" | "year", "asc" | "desc"];
+    const dir = dirStr === "desc" ? -1 : 1;
+    return [...data.festivals]
+      .filter((f) => city === FESTIVAL_ALL || f.city === city)
+      .filter((f) => year === FESTIVAL_ALL || String(f.year) === year)
+      .sort((a, b) => {
+        const av = a[field] ?? "";
+        const bv = b[field] ?? "";
+        return av < bv ? -dir : av > bv ? dir : 0;
+      });
+  }, [data.festivals, city, year, sort]);
+
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
 
   return (
     <>
@@ -616,45 +769,83 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Nome", "Città", "Anno", "Periodo", "", ""]}>
-          {data.festivals.map((f) => (
-            <Row key={f.id}>
-              <TableCell sx={{ fontWeight: 600 }}>{f.name}</TableCell>
-              <TableCell>{f.city ?? "—"}</TableCell>
-              <TableCell>{f.year ?? "—"}</TableCell>
-              <TableCell>
-                {formatDate(f.startDate)} — {formatDate(f.endDate)}
-              </TableCell>
-              <TableCell>
-                <Button
-                  size="small"
-                  onClick={() => setMoviesPanelFor(moviesPanelFor === f.id ? null : f.id)}
-                  sx={{ minWidth: 0, p: 0, color: moviesPanelFor === f.id ? "primary.main" : "text.secondary" }}
-                >
-                  Film
-                </Button>
-              </TableCell>
-              <TableCell>
-                <RowActions
-                  onEdit={() =>
-                    setForm({
-                      id: f.id,
-                      name: f.name,
-                      year: f.year,
-                      city: f.city ?? "",
-                      startDate: f.startDate ?? "",
-                      endDate: f.endDate ?? "",
-                      description: f.description ?? "",
-                    })
-                  }
-                  onDelete={() =>
-                    confirmAndRun(`il festival “${f.name}”`, () => deleteFestival(demo, f.id))
-                  }
-                />
-              </TableCell>
-            </Row>
-          ))}
-        </Table>
+        <>
+          <TableToolbar>
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>Città</InputLabel>
+              <Select label="Città" value={city} onChange={(e) => setCity(e.target.value)}>
+                <MenuItem value={FESTIVAL_ALL}>Tutte le città</MenuItem>
+                {cities.map((c) => (
+                  <MenuItem key={c} value={c}>
+                    {c}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Anno</InputLabel>
+              <Select label="Anno" value={year} onChange={(e) => setYear(e.target.value)}>
+                <MenuItem value={FESTIVAL_ALL}>Tutti gli anni</MenuItem>
+                {years.map((y) => (
+                  <MenuItem key={y} value={String(y)}>
+                    {y}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Ordina per</InputLabel>
+              <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as FestivalSort)}>
+                <MenuItem value="startDate-asc">Data (vicine prima)</MenuItem>
+                <MenuItem value="startDate-desc">Data (lontane prima)</MenuItem>
+                <MenuItem value="name-asc">Nome (A-Z)</MenuItem>
+                <MenuItem value="name-desc">Nome (Z-A)</MenuItem>
+                <MenuItem value="year-desc">Anno (recenti prima)</MenuItem>
+                <MenuItem value="year-asc">Anno (vecchi prima)</MenuItem>
+              </Select>
+            </FormControl>
+          </TableToolbar>
+          <Table headers={["Nome", "Città", "Anno", "Periodo", "", ""]}>
+            {pageItems.map((f) => (
+              <Row key={f.id}>
+                <TableCell sx={{ fontWeight: 600 }}>{f.name}</TableCell>
+                <TableCell>{f.city ?? "—"}</TableCell>
+                <TableCell>{f.year ?? "—"}</TableCell>
+                <TableCell>
+                  {formatDate(f.startDate)} — {formatDate(f.endDate)}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="small"
+                    onClick={() => setMoviesPanelFor(moviesPanelFor === f.id ? null : f.id)}
+                    sx={{ minWidth: 0, p: 0, color: moviesPanelFor === f.id ? "primary.main" : "text.secondary" }}
+                  >
+                    Film
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <RowActions
+                    onEdit={() =>
+                      setForm({
+                        id: f.id,
+                        name: f.name,
+                        year: f.year,
+                        city: f.city ?? "",
+                        startDate: f.startDate ?? "",
+                        endDate: f.endDate ?? "",
+                        description: f.description ?? "",
+                      })
+                    }
+                    onDelete={() =>
+                      confirmAndRun(`il festival “${f.name}”`, () => deleteFestival(demo, f.id))
+                    }
+                  />
+                </TableCell>
+              </Row>
+            ))}
+          </Table>
+          <TablePager page={page} totalPages={totalPages} totalElements={totalElements} label="festival" onChange={setPage} />
+        </>
       }
     />
     {moviesPanelFor !== null && (
@@ -758,8 +949,13 @@ const emptyScreening: ScreeningForm = {
   time: "",
 };
 
+const SCREENING_ALL_FESTIVALS = "__all__";
+type ScreeningSort = "date-asc" | "date-desc" | "movie-asc" | "movie-desc";
+
 function ScreeningsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<ScreeningForm>(emptyScreening);
+  const [festivalFilter, setFestivalFilter] = useState<string>(SCREENING_ALL_FESTIVALS);
+  const [sort, setSort] = useState<ScreeningSort>("date-asc");
 
   const submit = () =>
     void run(async () => {
@@ -768,6 +964,22 @@ function ScreeningsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
     }, "Proiezione salvata.");
 
   const valid = form.festivalId && form.movieId && form.hallId && form.date && form.time;
+
+  const filteredSorted = useMemo(() => {
+    const dir = sort.endsWith("desc") ? -1 : 1;
+    return [...data.screenings]
+      .filter((s) => festivalFilter === SCREENING_ALL_FESTIVALS || String(s.festivalId) === festivalFilter)
+      .sort((a, b) => {
+        if (sort.startsWith("movie")) {
+          return a.movie.title < b.movie.title ? -dir : a.movie.title > b.movie.title ? dir : 0;
+        }
+        const av = `${a.date}T${a.time}`;
+        const bv = `${b.date}T${b.time}`;
+        return av < bv ? -dir : av > bv ? dir : 0;
+      });
+  }, [data.screenings, festivalFilter, sort]);
+
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
 
   return (
     <Section
@@ -853,38 +1065,63 @@ function ScreeningsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Data", "Ora", "Film", "Sala", "Festival", ""]}>
-          {data.screenings.map((s) => (
-            <Row key={s.id}>
-              <TableCell>{formatDate(s.date)}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{formatTime(s.time)}</TableCell>
-              <TableCell>{s.movie.title}</TableCell>
-              <TableCell>{s.hall.name}</TableCell>
-              <TableCell>
-                {data.festivals.find((f) => f.id === s.festivalId)?.name ?? s.festivalId}
-              </TableCell>
-              <TableCell>
-                <RowActions
-                  onEdit={() =>
-                    setForm({
-                      id: s.id,
-                      festivalId: s.festivalId,
-                      movieId: s.movie.id,
-                      hallId: s.hall.id,
-                      date: s.date,
-                      time: s.time.slice(0, 5),
-                    })
-                  }
-                  onDelete={() =>
-                    confirmAndRun(`la proiezione di “${s.movie.title}”`, () =>
-                      deleteScreening(demo, s.id),
-                    )
-                  }
-                />
-              </TableCell>
-            </Row>
-          ))}
-        </Table>
+        <>
+          <TableToolbar>
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Festival</InputLabel>
+              <Select label="Festival" value={festivalFilter} onChange={(e) => setFestivalFilter(e.target.value)}>
+                <MenuItem value={SCREENING_ALL_FESTIVALS}>Tutti i festival</MenuItem>
+                {data.festivals.map((f) => (
+                  <MenuItem key={f.id} value={String(f.id)}>
+                    {f.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Ordina per</InputLabel>
+              <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as ScreeningSort)}>
+                <MenuItem value="date-asc">Data (vicine prima)</MenuItem>
+                <MenuItem value="date-desc">Data (lontane prima)</MenuItem>
+                <MenuItem value="movie-asc">Film (A-Z)</MenuItem>
+                <MenuItem value="movie-desc">Film (Z-A)</MenuItem>
+              </Select>
+            </FormControl>
+          </TableToolbar>
+          <Table headers={["Data", "Ora", "Film", "Sala", "Festival", ""]}>
+            {pageItems.map((s) => (
+              <Row key={s.id}>
+                <TableCell>{formatDate(s.date)}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{formatTime(s.time)}</TableCell>
+                <TableCell>{s.movie.title}</TableCell>
+                <TableCell>{s.hall.name}</TableCell>
+                <TableCell>
+                  {data.festivals.find((f) => f.id === s.festivalId)?.name ?? s.festivalId}
+                </TableCell>
+                <TableCell>
+                  <RowActions
+                    onEdit={() =>
+                      setForm({
+                        id: s.id,
+                        festivalId: s.festivalId,
+                        movieId: s.movie.id,
+                        hallId: s.hall.id,
+                        date: s.date,
+                        time: s.time.slice(0, 5),
+                      })
+                    }
+                    onDelete={() =>
+                      confirmAndRun(`la proiezione di “${s.movie.title}”`, () =>
+                        deleteScreening(demo, s.id),
+                      )
+                    }
+                  />
+                </TableCell>
+              </Row>
+            ))}
+          </Table>
+          <TablePager page={page} totalPages={totalPages} totalElements={totalElements} label="proiezioni" onChange={setPage} />
+        </>
       }
     />
   );
@@ -900,14 +1137,38 @@ const emptyDirector: DirectorForm = {
   nationality: "",
 };
 
+type DirectorSort = "surname-asc" | "surname-desc" | "nationality-asc" | "birthDate-desc" | "birthDate-asc";
+
 function DirectorsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<DirectorForm>(emptyDirector);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<DirectorSort>("surname-asc");
 
   const submit = () =>
     void run(async () => {
       await saveDirector(demo, form);
       setForm(emptyDirector);
     }, "Regista salvato.");
+
+  const filteredSorted = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const field = sort.startsWith("nationality") ? "nationality" : sort.startsWith("birthDate") ? "birthDate" : "surname";
+    const dir = sort.endsWith("desc") ? -1 : 1;
+    return [...data.directors]
+      .filter(
+        (d) =>
+          !q ||
+          `${d.name} ${d.surname}`.toLowerCase().includes(q) ||
+          (d.nationality ?? "").toLowerCase().includes(q),
+      )
+      .sort((a, b) => {
+        const av = a[field] ?? "";
+        const bv = b[field] ?? "";
+        return av < bv ? -dir : av > bv ? dir : 0;
+      });
+  }, [data.directors, search, sort]);
+
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
 
   return (
     <Section
@@ -961,33 +1222,56 @@ function DirectorsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Nome", "Nascita", "Nazionalità", ""]}>
-          {data.directors.map((d) => (
-            <Row key={d.id}>
-              <TableCell sx={{ fontWeight: 600 }}>
-                {d.name} {d.surname}
-              </TableCell>
-              <TableCell>{formatDate(d.birthDate)}</TableCell>
-              <TableCell>{d.nationality ?? "—"}</TableCell>
-              <TableCell>
-                <RowActions
-                  onEdit={() =>
-                    setForm({
-                      id: d.id,
-                      name: d.name,
-                      surname: d.surname,
-                      birthDate: d.birthDate ?? "",
-                      nationality: d.nationality ?? "",
-                    })
-                  }
-                  onDelete={() =>
-                    confirmAndRun(`il regista ${d.name} ${d.surname}`, () => deleteDirector(demo, d.id))
-                  }
-                />
-              </TableCell>
-            </Row>
-          ))}
-        </Table>
+        <>
+          <TableToolbar>
+            <TextField
+              size="small"
+              label="Cerca"
+              placeholder="Nome o nazionalità…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ minWidth: 220 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Ordina per</InputLabel>
+              <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as DirectorSort)}>
+                <MenuItem value="surname-asc">Cognome (A-Z)</MenuItem>
+                <MenuItem value="surname-desc">Cognome (Z-A)</MenuItem>
+                <MenuItem value="nationality-asc">Nazionalità</MenuItem>
+                <MenuItem value="birthDate-desc">Nascita (recenti prima)</MenuItem>
+                <MenuItem value="birthDate-asc">Nascita (meno recenti prima)</MenuItem>
+              </Select>
+            </FormControl>
+          </TableToolbar>
+          <Table headers={["Nome", "Nascita", "Nazionalità", ""]}>
+            {pageItems.map((d) => (
+              <Row key={d.id}>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {d.name} {d.surname}
+                </TableCell>
+                <TableCell>{formatDate(d.birthDate)}</TableCell>
+                <TableCell>{d.nationality ?? "—"}</TableCell>
+                <TableCell>
+                  <RowActions
+                    onEdit={() =>
+                      setForm({
+                        id: d.id,
+                        name: d.name,
+                        surname: d.surname,
+                        birthDate: d.birthDate ?? "",
+                        nationality: d.nationality ?? "",
+                      })
+                    }
+                    onDelete={() =>
+                      confirmAndRun(`il regista ${d.name} ${d.surname}`, () => deleteDirector(demo, d.id))
+                    }
+                  />
+                </TableCell>
+              </Row>
+            ))}
+          </Table>
+          <TablePager page={page} totalPages={totalPages} totalElements={totalElements} label="registi" onChange={setPage} />
+        </>
       }
     />
   );
@@ -997,14 +1281,33 @@ function DirectorsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
 
 const emptyHall: HallForm = { id: null, name: "", address: "", capacity: null };
 
+type HallSort = "name-asc" | "name-desc" | "capacity-desc" | "capacity-asc";
+
 function HallsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<HallForm>(emptyHall);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<HallSort>("name-asc");
 
   const submit = () =>
     void run(async () => {
       await saveHall(demo, form);
       setForm(emptyHall);
     }, "Sala salvata.");
+
+  const filteredSorted = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const field = sort.startsWith("capacity") ? "capacity" : "name";
+    const dir = sort.endsWith("desc") ? -1 : 1;
+    return [...data.halls]
+      .filter((h) => !q || h.name.toLowerCase().includes(q) || (h.address ?? "").toLowerCase().includes(q))
+      .sort((a, b) => {
+        const av = a[field] ?? "";
+        const bv = b[field] ?? "";
+        return av < bv ? -dir : av > bv ? dir : 0;
+      });
+  }, [data.halls, search, sort]);
+
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
 
   return (
     <Section
@@ -1048,28 +1351,50 @@ function HallsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Nome", "Indirizzo", "Capienza", ""]}>
-          {data.halls.map((h) => (
-            <Row key={h.id}>
-              <TableCell sx={{ fontWeight: 600 }}>{h.name}</TableCell>
-              <TableCell>{h.address ?? "—"}</TableCell>
-              <TableCell>{h.capacity ?? "—"}</TableCell>
-              <TableCell>
-                <RowActions
-                  onEdit={() =>
-                    setForm({
-                      id: h.id,
-                      name: h.name,
-                      address: h.address ?? "",
-                      capacity: h.capacity,
-                    })
-                  }
-                  onDelete={() => confirmAndRun(`la sala “${h.name}”`, () => deleteHall(demo, h.id))}
-                />
-              </TableCell>
-            </Row>
-          ))}
-        </Table>
+        <>
+          <TableToolbar>
+            <TextField
+              size="small"
+              label="Cerca"
+              placeholder="Nome o indirizzo…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ minWidth: 220 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Ordina per</InputLabel>
+              <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as HallSort)}>
+                <MenuItem value="name-asc">Nome (A-Z)</MenuItem>
+                <MenuItem value="name-desc">Nome (Z-A)</MenuItem>
+                <MenuItem value="capacity-desc">Capienza (maggiore prima)</MenuItem>
+                <MenuItem value="capacity-asc">Capienza (minore prima)</MenuItem>
+              </Select>
+            </FormControl>
+          </TableToolbar>
+          <Table headers={["Nome", "Indirizzo", "Capienza", ""]}>
+            {pageItems.map((h) => (
+              <Row key={h.id}>
+                <TableCell sx={{ fontWeight: 600 }}>{h.name}</TableCell>
+                <TableCell>{h.address ?? "—"}</TableCell>
+                <TableCell>{h.capacity ?? "—"}</TableCell>
+                <TableCell>
+                  <RowActions
+                    onEdit={() =>
+                      setForm({
+                        id: h.id,
+                        name: h.name,
+                        address: h.address ?? "",
+                        capacity: h.capacity,
+                      })
+                    }
+                    onDelete={() => confirmAndRun(`la sala “${h.name}”`, () => deleteHall(demo, h.id))}
+                  />
+                </TableCell>
+              </Row>
+            ))}
+          </Table>
+          <TablePager page={page} totalPages={totalPages} totalElements={totalElements} label="sale" onChange={setPage} />
+        </>
       }
     />
   );
@@ -1087,15 +1412,29 @@ const emptyUser: UserForm = {
   role: "USER",
 };
 
+const USER_ALL_ROLES = "__all__";
+type UserSort = "username-asc" | "username-desc";
+
 function UsersTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const { user: current } = useAuth();
   const [form, setForm] = useState<UserForm>(emptyUser);
+  const [roleFilter, setRoleFilter] = useState(USER_ALL_ROLES);
+  const [sort, setSort] = useState<UserSort>("username-asc");
 
   const submit = () =>
     void run(async () => {
       await saveUser(demo, form);
       setForm(emptyUser);
     }, "Utente salvato.");
+
+  const filteredSorted = useMemo(() => {
+    const dir = sort.endsWith("desc") ? -1 : 1;
+    return [...data.users]
+      .filter((u) => roleFilter === USER_ALL_ROLES || u.role.toUpperCase() === roleFilter)
+      .sort((a, b) => (a.username < b.username ? -dir : a.username > b.username ? dir : 0));
+  }, [data.users, roleFilter, sort]);
+
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
 
   return (
     <Section
@@ -1168,8 +1507,26 @@ function UsersTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Username", "Nome", "Email", "Ruolo", ""]}>
-          {data.users.map((u) => {
+        <>
+          <TableToolbar>
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>Ruolo</InputLabel>
+              <Select label="Ruolo" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                <MenuItem value={USER_ALL_ROLES}>Tutti i ruoli</MenuItem>
+                <MenuItem value="USER">Utente</MenuItem>
+                <MenuItem value="ADMIN">Amministratore</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Ordina per</InputLabel>
+              <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as UserSort)}>
+                <MenuItem value="username-asc">Username (A-Z)</MenuItem>
+                <MenuItem value="username-desc">Username (Z-A)</MenuItem>
+              </Select>
+            </FormControl>
+          </TableToolbar>
+          <Table headers={["Username", "Nome", "Email", "Ruolo", ""]}>
+          {pageItems.map((u) => {
             const isAdminRole = u.role.toUpperCase().includes("ADMIN");
             return (
               <Row key={u.id}>
@@ -1215,7 +1572,9 @@ function UsersTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
               </Row>
             );
           })}
-        </Table>
+          </Table>
+          <TablePager page={page} totalPages={totalPages} totalElements={totalElements} label="utenti" onChange={setPage} />
+        </>
       }
     />
   );

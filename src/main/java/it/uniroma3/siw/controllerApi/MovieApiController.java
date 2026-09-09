@@ -9,6 +9,7 @@ import it.uniroma3.siw.service.ReviewService;
 import it.uniroma3.siw.service.ScreeningService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,19 +28,39 @@ public class MovieApiController {
     private final ReviewService reviewService;
     private final ScreeningService screeningService;
 
+    private static final java.util.Set<String> SORTABLE_FIELDS = java.util.Set.of("title", "year", "duration");
+
     /**
      * Catalogo pubblico paginato. La ricerca (se presente) confronta titolo,
      * genere e nome/cognome del regista - vedi MovieRepository.search.
+     * sortBy/sortDir sono validati contro una whitelist per evitare di
+     * esporre nomi di proprieta' arbitrari nella query di ordinamento.
      */
     @GetMapping
     public Page<MovieDTO> getAll(@RequestParam(required = false) String search,
+                                  @RequestParam(required = false) String genre,
                                   @RequestParam(defaultValue = "0") int page,
-                                  @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("title").ascending());
-        Page<Movie> movies = (search == null || search.isBlank())
-                ? movieService.findAll(pageable)
-                : movieService.search(search, pageable);
-        return movies.map(MovieDTO::from);
+                                  @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
+                                  @RequestParam(defaultValue = "title") String sortBy,
+                                  @RequestParam(defaultValue = "asc") String sortDir) {
+        String field = SORTABLE_FIELDS.contains(sortBy) ? sortBy : "title";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, field));
+        Page<Movie> result = movieService.search(search, genre, pageable);
+        List<MovieDTO> enriched = movieService.enrichWithStats(result.getContent().stream().map(MovieDTO::from).toList());
+        return new PageImpl<>(enriched, pageable, result.getTotalElements());
+    }
+
+    @GetMapping("/genres")
+    public List<String> getGenres() {
+        return movieService.findDistinctGenres();
+    }
+
+    /** I film con la media voti piu' alta (recensioni positive), per la sezione in evidenza della home. */
+    @GetMapping("/top-rated")
+    public List<MovieDTO> getTopRated(@RequestParam(defaultValue = "6") int limit) {
+        List<MovieDTO> dtos = movieService.findTopRated(limit).stream().map(MovieDTO::from).toList();
+        return movieService.enrichWithStats(dtos);
     }
 
     @GetMapping("/{id}")

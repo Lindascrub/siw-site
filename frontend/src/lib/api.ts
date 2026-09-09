@@ -107,11 +107,30 @@ export const getFestivalMovies = (id: number) =>
 export const getFestivalScreenings = (id: number) =>
   request<ScreeningDTO[]>(`/api/festivals/${id}/screenings`);
 
-export function getMovies(search?: string, page = 0, size = 12): Promise<PageResponse<MovieDTO>> {
-  const params = new URLSearchParams({ page: String(page), size: String(size) });
-  if (search) params.set("search", search);
+export interface MovieQuery {
+  search?: string | undefined;
+  genre?: string | undefined;
+  page?: number;
+  size?: number;
+  sortBy?: "title" | "year" | "duration";
+  sortDir?: "asc" | "desc";
+}
+
+export function getMovies(q: MovieQuery = {}): Promise<PageResponse<MovieDTO>> {
+  const params = new URLSearchParams({
+    page: String(q.page ?? 0),
+    size: String(q.size ?? 20),
+    sortBy: q.sortBy ?? "title",
+    sortDir: q.sortDir ?? "asc",
+  });
+  if (q.search) params.set("search", q.search);
+  if (q.genre) params.set("genre", q.genre);
   return request<PageResponse<MovieDTO>>(`/api/movies?${params.toString()}`);
 }
+
+export const getMovieGenres = () => request<string[]>("/api/movies/genres");
+export const getTopRatedMovies = (limit = 6) =>
+  request<MovieDTO[]>(`/api/movies/top-rated?limit=${limit}`);
 export const getMovie = (id: number) => request<MovieDTO>(`/api/movies/${id}`);
 export const getMovieReviews = (id: number) => request<ReviewDTO[]>(`/api/movies/${id}/reviews`);
 

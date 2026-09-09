@@ -8,7 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { MovieCard } from "../components/MovieCard";
-import { fetchFestivals, fetchMovies } from "../lib/data";
+import { fetchFestivals, fetchTopRatedMovies } from "../lib/data";
 import { formatDate } from "../lib/format";
 import type { FestivalDTO, MovieDTO } from "../lib/types";
 import heroImage from "../assets/hero.jpg";
@@ -37,8 +37,8 @@ function HomePage() {
   const [movies, setMovies] = useState<MovieDTO[]>([]);
 
   useEffect(() => {
-    void fetchFestivals().then(setFestivals).catch(() => setFestivals([]));
-    void fetchMovies(undefined, 0, 4).then((p) => setMovies(p.content)).catch(() => setMovies([]));
+    void fetchFestivals().then((f) => setFestivals(f.slice(0, 6))).catch(() => setFestivals([]));
+    void fetchTopRatedMovies(6).then(setMovies).catch(() => setMovies([]));
   }, []);
 
   return (
@@ -137,7 +137,7 @@ function HomePage() {
             sx={{ justifyContent: "space-between", alignItems: "flex-end", borderBottom: 2, borderColor: "text.primary", pb: 1.5 }}
           >
             <Typography variant="h2" sx={{ fontSize: { xs: 32, sm: 48 } }}>
-              In Programmazione
+              I più amati dal pubblico
             </Typography>
             <Button component={Link} to="/film" color="primary">
               Catalogo →
@@ -148,7 +148,7 @@ function HomePage() {
               mt: 4,
               display: "grid",
               gap: 3,
-              gridTemplateColumns: { xs: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+              gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" },
             }}
           >
             {movies.map((m) => (

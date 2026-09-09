@@ -28,16 +28,47 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     @Query("SELECT m FROM Movie m JOIN FETCH m.director LEFT JOIN FETCH m.festivals WHERE m.id = :id")
     Optional<Movie> findByIdWithDetails(@Param("id") Long id);
 
-    /** Ricerca per titolo, genere o nome/cognome del regista (usata dal catalogo pubblico), con paginazione. */
+    /**
+     * Catalogo pubblico: ricerca facoltativa per titolo, genere o nome/cognome
+     * del regista, filtro facoltativo per genere esatto (usato dal Select di
+     * filtro), entrambi opzionali e combinabili. Paginato.
+     */
+    // CAST(:q as string)/CAST(:genre as string) - senza il cast esplicito,
+    // Postgres non riesce a dedurre il tipo del parametro quando e' null
+    // (compare nella clausola "IS NULL"), e lo assume bytea: lower(bytea)
+    // non esiste e la query fallisce con un errore quando search/genre non
+    // sono passati (es. GET /api/movies senza query string).
     @Query(value = "SELECT m FROM Movie m WHERE "
-            + "lower(m.title) LIKE lower(concat('%', :q, '%')) OR "
-            + "lower(m.genre) LIKE lower(concat('%', :q, '%')) OR "
-            + "lower(m.director.name) LIKE lower(concat('%', :q, '%')) OR "
-            + "lower(m.director.surname) LIKE lower(concat('%', :q, '%'))",
+            + "(CAST(:q as string) IS NULL OR "
+            + "lower(m.title) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
+            + "lower(m.genre) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
+            + "lower(m.director.name) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
+            + "lower(m.director.surname) LIKE lower(concat('%', CAST(:q as string), '%'))) "
+            + "AND (CAST(:genre as string) IS NULL OR m.genre = CAST(:genre as string))",
             countQuery = "SELECT COUNT(m) FROM Movie m WHERE "
-            + "lower(m.title) LIKE lower(concat('%', :q, '%')) OR "
-            + "lower(m.genre) LIKE lower(concat('%', :q, '%')) OR "
-            + "lower(m.director.name) LIKE lower(concat('%', :q, '%')) OR "
-            + "lower(m.director.surname) LIKE lower(concat('%', :q, '%'))")
-    Page<Movie> search(@Param("q") String query, Pageable pageable);
+            + "(CAST(:q as string) IS NULL OR "
+            + "lower(m.title) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
+            + "lower(m.genre) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
+            + "lower(m.director.name) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
+            + "lower(m.director.surname) LIKE lower(concat('%', CAST(:q as string), '%'))) "
+            + "AND (CAST(:genre as string) IS NULL OR m.genre = CAST(:genre as string))")
+    Page<Movie> search(@Param("q") String query, @Param("genre") String genre, Pageable pageable);
+
+    /** Elenco distinto dei generi presenti, per popolare il filtro a tendina. */
+    @Query("SELECT DISTINCT m.genre FROM Movie m ORDER BY m.genre")
+    List<String> findDistinctGenres();
+
+    /**
+     * Film ordinati per media voti decrescente (a parita' di media, per numero
+     * di recensioni), per la sezione "in evidenza" della home. Query nativa:
+     * "GROUP BY m" in JPQL sull'intera entita' non e' affidabile con ORDER BY
+     * su un aggregato, qui invece raggruppiamo per chiave primaria (supportato
+     * da Postgres per dipendenza funzionale) e Hibernate mappa le colonne sul
+     * risultato List&lt;Movie&gt;.
+     */
+    @Query(value = "SELECT m.* FROM movie m LEFT JOIN reviews r ON r.movie_id = m.id "
+            + "GROUP BY m.id "
+            + "ORDER BY COALESCE(AVG(r.vote), 0) DESC, COUNT(r.id) DESC, m.title ASC",
+            nativeQuery = true)
+    List<Movie> findTopRated(Pageable pageable);
 }

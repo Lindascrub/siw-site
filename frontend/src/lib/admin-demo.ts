@@ -91,6 +91,8 @@ export const demoAdmin = {
       posterFilename: existing?.posterFilename ?? null,
       festivals: existing?.festivals ?? [],
       screenings: existing?.screenings ?? [],
+      avgRating: existing?.avgRating ?? null,
+      reviewCount: existing?.reviewCount ?? 0,
     };
     const i = demoMovies.findIndex((m) => m.id === value.id);
     if (i >= 0) demoMovies[i] = value;

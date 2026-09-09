@@ -2,16 +2,30 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
+import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { MovieCard } from "../components/MovieCard";
-import { fetchMovies } from "../lib/data";
+import { fetchMovieGenres, fetchMovies } from "../lib/data";
 import type { MovieDTO } from "../lib/types";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
+const ALL_GENRES = "__all__";
+type SortBy = "title" | "year" | "duration";
+const SORT_OPTIONS: { value: `${SortBy}-${"asc" | "desc"}`; label: string }[] = [
+  { value: "title-asc", label: "Titolo (A-Z)" },
+  { value: "title-desc", label: "Titolo (Z-A)" },
+  { value: "year-desc", label: "Anno (più recenti)" },
+  { value: "year-asc", label: "Anno (meno recenti)" },
+  { value: "duration-asc", label: "Durata (crescente)" },
+  { value: "duration-desc", label: "Durata (decrescente)" },
+];
 
 export const Route = createFileRoute("/film/")({
   head: () => ({
@@ -33,21 +47,36 @@ export const Route = createFileRoute("/film/")({
 
 function MovieCatalogPage() {
   const [search, setSearch] = useState("");
+  const [genre, setGenre] = useState(ALL_GENRES);
+  const [genres, setGenres] = useState<string[]>([]);
+  const [sort, setSort] = useState<`${SortBy}-${"asc" | "desc"}`>("title-asc");
   const [page, setPage] = useState(0); // 0-based, come l'API
   const [movies, setMovies] = useState<MovieDTO[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // ogni nuova ricerca riparte dalla prima pagina
+  useEffect(() => {
+    void fetchMovieGenres().then(setGenres).catch(() => setGenres([]));
+  }, []);
+
+  // ogni nuova ricerca/filtro/ordinamento riparte dalla prima pagina
   useEffect(() => {
     setPage(0);
-  }, [search]);
+  }, [search, genre, sort]);
 
   useEffect(() => {
     setLoading(true);
+    const [sortBy, sortDir] = sort.split("-") as [SortBy, "asc" | "desc"];
     const handle = setTimeout(() => {
-      void fetchMovies(search || undefined, page, PAGE_SIZE)
+      void fetchMovies({
+        search: search || undefined,
+        genre: genre === ALL_GENRES ? undefined : genre,
+        page,
+        size: PAGE_SIZE,
+        sortBy,
+        sortDir,
+      })
         .then((p) => {
           setMovies(p.content);
           setTotalPages(p.totalPages);
@@ -61,7 +90,7 @@ function MovieCatalogPage() {
         .finally(() => setLoading(false));
     }, 250); // debounce
     return () => clearTimeout(handle);
-  }, [search, page]);
+  }, [search, genre, sort, page]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -88,6 +117,30 @@ function MovieCatalogPage() {
         />
       </Stack>
 
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 3, flexWrap: "wrap" }}>
+        <FormControl sx={{ minWidth: 180 }} size="small">
+          <InputLabel>Genere</InputLabel>
+          <Select label="Genere" value={genre} onChange={(e) => setGenre(e.target.value)}>
+            <MenuItem value={ALL_GENRES}>Tutti i generi</MenuItem>
+            {genres.map((g) => (
+              <MenuItem key={g} value={g}>
+                {g}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 220 }} size="small">
+          <InputLabel>Ordina per</InputLabel>
+          <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
+            {SORT_OPTIONS.map((o) => (
+              <MenuItem key={o.value} value={o.value}>
+                {o.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
+
       {loading ? (
         <Typography color="text.secondary" sx={{ mt: 5 }}>
           Caricamento…
@@ -99,8 +152,7 @@ function MovieCatalogPage() {
       ) : (
         <>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
-            {totalElements} {totalElements === 1 ? "film" : "film"}
-            {totalPages > 1 ? ` · pagina ${page + 1} di ${totalPages}` : ""}
+            {totalElements} film{totalPages > 1 ? ` · pagina ${page + 1} di ${totalPages}` : ""}
           </Typography>
           <Box
             sx={{

@@ -8,17 +8,23 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { AppLink } from "../components/AppLink";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
+import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import Alert from "@mui/material/Alert";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import InstagramIcon from "@mui/icons-material/Instagram";
+import TwitterIcon from "@mui/icons-material/Twitter";
+import YouTubeIcon from "@mui/icons-material/YouTube";
 import { ThemeProvider } from "@mui/material/styles";
 
 import appCss from "../styles.css?url";
@@ -245,17 +251,136 @@ function DemoBanner() {
   );
 }
 
+// Nota: al momento CineFest non ha ancora pagine social attive - le icone e
+// il modulo newsletter puntano a un placeholder scherzoso, su richiesta.
+const SOCIAL_URL =
+  "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1";
+const NEWSLETTER_URL = "https://www.youtube.com/watch?v=L7ejl_Hj3A8";
+
+const footerLinkSx = {
+  color: "rgba(255,255,255,0.6)",
+  textDecoration: "none",
+  fontSize: 14,
+  "&:hover": { color: "primary.main" },
+};
+
+function NewsletterForm() {
+  const [email, setEmail] = useState("");
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    window.open(NEWSLETTER_URL, "_blank", "noopener,noreferrer");
+  }
+
+  return (
+    <Box component="form" onSubmit={handleSubmit}>
+      <Stack direction="row" spacing={1}>
+        <TextField
+          type="email"
+          required
+          size="small"
+          placeholder="La tua email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          sx={{
+            flex: 1,
+            input: { color: "#fff" },
+            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.25)" },
+            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.5)" },
+          }}
+        />
+        <Button type="submit" variant="contained" color="primary">
+          Iscriviti
+        </Button>
+      </Stack>
+    </Box>
+  );
+}
+
 function SiteFooter() {
   return (
     <Box component="footer" sx={{ bgcolor: "#111", color: "rgba(255,255,255,0.6)", mt: "auto" }}>
-      <Container maxWidth="lg" sx={{ py: 5, display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "space-between", alignItems: "center" }}>
-        <Typography variant="h6" sx={{ color: "#fff", fontWeight: 900 }}>
-          Cine<Box component="span" sx={{ color: "primary.main" }}>Fest</Box>
-        </Typography>
-        <Typography variant="body2">
-          Frontend React + TypeScript + MUI · API Spring Boot su{" "}
-          <Box component="code" sx={{ color: "primary.main" }}>localhost:8080</Box>
-        </Typography>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 5,
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "1.3fr 1fr 1.3fr" },
+          }}
+        >
+          <Box>
+            <Typography variant="h6" sx={{ color: "#fff", fontWeight: 900 }}>
+              Cine<Box component="span" sx={{ color: "primary.main" }}>Fest</Box>
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1.5, maxWidth: 320 }}>
+              I festival cinematografici italiani in un unico posto: catalogo dei film, programma
+              delle proiezioni e recensioni del pubblico.
+            </Typography>
+            <Stack direction="row" spacing={0.5} sx={{ mt: 2 }}>
+              {[FacebookIcon, InstagramIcon, TwitterIcon, YouTubeIcon].map((Icon, i) => (
+                <IconButton
+                  key={i}
+                  component="a"
+                  href={SOCIAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={{ color: "rgba(255,255,255,0.6)", "&:hover": { color: "primary.main" } }}
+                >
+                  <Icon fontSize="small" />
+                </IconButton>
+              ))}
+            </Stack>
+          </Box>
+
+          <Box>
+            <Typography variant="overline" sx={{ color: "#fff", fontWeight: 700 }}>
+              Federazione Eventi Cinema
+            </Typography>
+            <Stack spacing={1} sx={{ mt: 1.5 }}>
+              <AppLink to="/chi-siamo" sx={footerLinkSx}>
+                Chi siamo
+              </AppLink>
+              <AppLink to="/contatti" sx={footerLinkSx}>
+                Contatti
+              </AppLink>
+              <AppLink to="/partnership" sx={footerLinkSx}>
+                Partnership
+              </AppLink>
+              <AppLink to="/privacy" sx={footerLinkSx}>
+                Informazioni sulla privacy
+              </AppLink>
+            </Stack>
+          </Box>
+
+          <Box>
+            <Typography variant="overline" sx={{ color: "#fff", fontWeight: 700 }}>
+              Rimani aggiornato
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1.5, mb: 2 }}>
+              Iscriviti per ricevere le novità sui festival e le uscite in programmazione.
+            </Typography>
+            <NewsletterForm />
+          </Box>
+        </Box>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          sx={{
+            mt: 5,
+            pt: 3,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+            justifyContent: "space-between",
+            alignItems: { sm: "center" },
+          }}
+        >
+          <Typography variant="caption" sx={{ display: "block" }}>
+            © 2026 CineFest | Uffici operativi Piazzale Never Gonna Give 67, 00111 You | Tel +39
+            676 676 6767 | info@nevergonnagiveyou.uo | Sede legale Viale P. De Give Up, 67
+          </Typography>
+          <Typography variant="caption">Designed by 67</Typography>
+        </Stack>
       </Container>
     </Box>
   );

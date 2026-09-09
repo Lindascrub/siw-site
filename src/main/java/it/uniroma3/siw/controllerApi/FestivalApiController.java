@@ -5,6 +5,7 @@ import it.uniroma3.siw.modelDTO.FestivalDTO;
 import it.uniroma3.siw.modelDTO.MovieDTO;
 import it.uniroma3.siw.modelDTO.ScreeningDTO;
 import it.uniroma3.siw.service.FestivalService;
+import it.uniroma3.siw.service.MovieService;
 import it.uniroma3.siw.service.ScreeningService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ public class FestivalApiController {
 
     private final FestivalService festivalService;
     private final ScreeningService screeningService;
+    private final MovieService movieService;
 
     @GetMapping
     public List<FestivalDTO> getAll() {
@@ -32,7 +34,8 @@ public class FestivalApiController {
     @GetMapping("/{id}/movies")
     public List<MovieDTO> getMovies(@PathVariable Long id) {
         Festival festival = festivalService.findByIdWithMovie(id);
-        return festival.getMovies().stream().map(MovieDTO::from).toList();
+        List<MovieDTO> movies = festival.getMovies().stream().map(MovieDTO::from).toList();
+        return movieService.enrichWithStats(movies);
     }
 
     @GetMapping("/{id}/screenings")

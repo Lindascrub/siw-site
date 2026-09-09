@@ -4,9 +4,12 @@ import it.uniroma3.siw.exception.BusinessRuleException;
 import it.uniroma3.siw.exception.ResourceNotFoundException;
 import it.uniroma3.siw.model.Director;
 import it.uniroma3.siw.model.Movie;
+import it.uniroma3.siw.modelDTO.MovieDTO;
 import it.uniroma3.siw.modelDTO.MovieFormDTO;
+import it.uniroma3.siw.modelDTO.MovieRatingStats;
 import it.uniroma3.siw.repository.DirectorRepository;
 import it.uniroma3.siw.repository.MovieRepository;
+import it.uniroma3.siw.repository.ReviewRepository;
 import it.uniroma3.siw.repository.ScreeningRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final DirectorRepository directorRepository;
     private final ScreeningRepository screeningRepository;
+    private final ReviewRepository reviewRepository;
     private final FileStorageService fileStorageService;
 
     public List<Movie> findAll() {
@@ -41,13 +47,41 @@ public class MovieService {
                 .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + id));
     }
 
-    /** Catalogo pubblico paginato, con ricerca facoltativa per titolo, genere o regista. */
-    public Page<Movie> findAll(Pageable pageable) {
-        return movieRepository.findAll(pageable);
+    /** Catalogo pubblico paginato, con ricerca e filtro per genere facoltativi. */
+    public Page<Movie> search(String query, String genre, Pageable pageable) {
+        return movieRepository.search(
+                (query == null || query.isBlank()) ? null : query,
+                (genre == null || genre.isBlank()) ? null : genre,
+                pageable);
     }
 
-    public Page<Movie> search(String query, Pageable pageable) {
-        return movieRepository.search(query, pageable);
+    public List<String> findDistinctGenres() {
+        return movieRepository.findDistinctGenres();
+    }
+
+    /**
+     * Arricchisce una lista di MovieDTO con media voti e numero di recensioni,
+     * con un'unica query aggregata sui soli film passati (niente N+1: non
+     * viene mai interrogata la collezione LAZY Movie.reviews per singolo film).
+     */
+    public List<MovieDTO> enrichWithStats(List<MovieDTO> movies) {
+        if (movies.isEmpty()) return movies;
+        List<Long> ids = movies.stream().map(MovieDTO::id).toList();
+        Map<Long, MovieRatingStats> statsById = new HashMap<>();
+        for (MovieRatingStats s : reviewRepository.aggregateForMovies(ids)) {
+            statsById.put(s.movieId(), s);
+        }
+        return movies.stream()
+                .map(m -> {
+                    MovieRatingStats s = statsById.get(m.id());
+                    return s == null ? m.withStats(null, 0L) : m.withStats(s.avgRating(), s.reviewCount());
+                })
+                .toList();
+    }
+
+    /** I 6 (o quanti richiesti) film con la media voti piu' alta, per la sezione in evidenza della home. */
+    public List<Movie> findTopRated(int limit) {
+        return movieRepository.findTopRated(org.springframework.data.domain.PageRequest.of(0, limit));
     }
 
     @Transactional

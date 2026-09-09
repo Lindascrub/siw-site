@@ -3,6 +3,7 @@ import { AppLink } from "../components/AppLink";
 import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import Pagination from "@mui/material/Pagination";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import FormControl from "@mui/material/FormControl";
@@ -16,6 +17,16 @@ import { formatDate } from "../lib/format";
 import type { FestivalDTO } from "../lib/types";
 
 const ALL = "__all__";
+const PAGE_SIZE = 20;
+type SortKey = "startDate-desc" | "startDate-asc" | "name-asc" | "name-desc" | "year-desc" | "year-asc";
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "startDate-asc", label: "Data (più vicine prima)" },
+  { value: "startDate-desc", label: "Data (più lontane prima)" },
+  { value: "name-asc", label: "Nome (A-Z)" },
+  { value: "name-desc", label: "Nome (Z-A)" },
+  { value: "year-desc", label: "Anno (più recenti)" },
+  { value: "year-asc", label: "Anno (meno recenti)" },
+];
 
 export const Route = createFileRoute("/festival/")({
   head: () => ({
@@ -39,6 +50,8 @@ function FestivalsPage() {
   const [allFestivals, setAllFestivals] = useState<FestivalDTO[] | null>(null);
   const [city, setCity] = useState(ALL);
   const [year, setYear] = useState(ALL);
+  const [sort, setSort] = useState<SortKey>("startDate-asc");
+  const [page, setPage] = useState(0); // 0-based
 
   useEffect(() => {
     void fetchFestivals()
@@ -59,13 +72,28 @@ function FestivalsPage() {
     [allFestivals],
   );
 
-  const festivals = useMemo(() => {
-    return (allFestivals ?? []).filter((f) => {
-      if (city !== ALL && f.city !== city) return false;
-      if (year !== ALL && String(f.year) !== year) return false;
-      return true;
-    });
-  }, [allFestivals, city, year]);
+  const filtered = useMemo(() => {
+    const [sortField, sortDir] = sort.split("-") as ["startDate" | "name" | "year", "asc" | "desc"];
+    const dir = sortDir === "desc" ? -1 : 1;
+    return (allFestivals ?? [])
+      .filter((f) => {
+        if (city !== ALL && f.city !== city) return false;
+        if (year !== ALL && String(f.year) !== year) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const av = a[sortField] ?? "";
+        const bv = b[sortField] ?? "";
+        return av < bv ? -dir : av > bv ? dir : 0;
+      });
+  }, [allFestivals, city, year, sort]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [city, year, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const festivals = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   const hasActiveFilters = city !== ALL || year !== ALL;
 
@@ -109,6 +137,16 @@ function FestivalsPage() {
             ))}
           </Select>
         </FormControl>
+        <FormControl sx={{ minWidth: 220 }}>
+          <InputLabel>Ordina per</InputLabel>
+          <Select label="Ordina per" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+            {SORT_OPTIONS.map((o) => (
+              <MenuItem key={o.value} value={o.value}>
+                {o.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         {hasActiveFilters && (
           <Button variant="text" onClick={clearFilters}>
             Azzera filtri
@@ -125,44 +163,60 @@ function FestivalsPage() {
           Nessun festival trovato.
         </Typography>
       ) : (
-        <Box
-          sx={{
-            mt: 5,
-            display: "grid",
-            gap: 3,
-            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-          }}
-        >
-          {festivals.map((f) => (
-            <AppLink
-              key={f.id}
-              to="/festival/$id"
-              params={{ id: String(f.id) }}
-              sx={{
-                p: 3,
-                border: 1,
-                borderColor: "divider",
-                textDecoration: "none",
-                color: "inherit",
-                "&:hover": { borderColor: "primary.main" },
-              }}
-            >
-              <Typography variant="overline" color="primary">
-                {f.city ?? ""}
-                {f.year ? ` · ${f.year}` : ""}
-              </Typography>
-              <Typography variant="h5" sx={{ mt: 0.5 }}>
-                {f.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {formatDate(f.startDate)} — {formatDate(f.endDate)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-                {f.description}
-              </Typography>
-            </AppLink>
-          ))}
-        </Box>
+        <>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
+            {filtered.length} festival{totalPages > 1 ? ` · pagina ${page + 1} di ${totalPages}` : ""}
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              display: "grid",
+              gap: 3,
+              gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+            }}
+          >
+            {festivals.map((f) => (
+              <AppLink
+                key={f.id}
+                to="/festival/$id"
+                params={{ id: String(f.id) }}
+                sx={{
+                  p: 3,
+                  border: 1,
+                  borderColor: "divider",
+                  textDecoration: "none",
+                  color: "inherit",
+                  "&:hover": { borderColor: "primary.main" },
+                }}
+              >
+                <Typography variant="overline" color="primary">
+                  {f.city ?? ""}
+                  {f.year ? ` · ${f.year}` : ""}
+                </Typography>
+                <Typography variant="h5" sx={{ mt: 0.5 }}>
+                  {f.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {formatDate(f.startDate)} — {formatDate(f.endDate)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+                  {f.description}
+                </Typography>
+              </AppLink>
+            ))}
+          </Box>
+          {totalPages > 1 && (
+            <Stack sx={{ mt: 6, alignItems: "center" }}>
+              <Pagination
+                count={totalPages}
+                page={page + 1}
+                onChange={(_e, value) => setPage(value - 1)}
+                color="primary"
+                shape="rounded"
+              />
+            </Stack>
+          )}
+        </>
       )}
     </Container>
   );

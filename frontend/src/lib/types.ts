@@ -50,6 +50,9 @@ export interface MovieDTO {
   /** Presenti solo nella risposta di dettaglio (GET /api/movies/{id}); vuoti nelle liste. */
   festivals: FestivalDTO[];
   screenings: MovieScreeningDTO[];
+  /** null/0 se il film non ha ancora recensioni. */
+  avgRating: number | null;
+  reviewCount: number;
 }
 
 /** Rispecchia org.springframework.data.domain.Page nella serializzazione JSON di Spring. */
