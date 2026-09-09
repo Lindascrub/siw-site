@@ -38,7 +38,7 @@ function HomePage() {
 
   useEffect(() => {
     void fetchFestivals().then(setFestivals).catch(() => setFestivals([]));
-    void fetchMovies().then((m) => setMovies(m.slice(0, 4))).catch(() => setMovies([]));
+    void fetchMovies(undefined, 0, 4).then((p) => setMovies(p.content)).catch(() => setMovies([]));
   }, []);
 
   return (

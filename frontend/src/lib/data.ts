@@ -12,7 +12,7 @@ import {
   demoScreenings,
   demoUpdateReview,
 } from "./demo-data";
-import type { FestivalDTO, MovieDTO, ReviewDTO, ScreeningDTO } from "./types";
+import type { FestivalDTO, MovieDTO, PageResponse, ReviewDTO, ScreeningDTO } from "./types";
 
 async function withFallback<T>(call: () => Promise<T>, fallback: () => T): Promise<T> {
   try {
@@ -48,18 +48,27 @@ export const fetchFestivalScreenings = (id: number) =>
     () => demoScreenings[id] ?? [],
   );
 
-export const fetchMovies = (search?: string) =>
-  withFallback(
-    () => api.getMovies(search),
+export const fetchMovies = (search?: string, page = 0, size = 12) =>
+  withFallback<PageResponse<MovieDTO>>(
+    () => api.getMovies(search, page, size),
     () => {
-      if (!search) return demoMovies;
-      const q = search.toLowerCase();
-      return demoMovies.filter(
-        (m) =>
-          m.title.toLowerCase().includes(q) ||
-          (m.genre ?? "").toLowerCase().includes(q) ||
-          (m.director ? `${m.director.name} ${m.director.surname}`.toLowerCase().includes(q) : false),
-      );
+      const q = (search ?? "").toLowerCase();
+      const filtered = !q
+        ? demoMovies
+        : demoMovies.filter(
+            (m) =>
+              m.title.toLowerCase().includes(q) ||
+              (m.genre ?? "").toLowerCase().includes(q) ||
+              (m.director ? `${m.director.name} ${m.director.surname}`.toLowerCase().includes(q) : false),
+          );
+      const content = filtered.slice(page * size, page * size + size);
+      return {
+        content,
+        totalElements: filtered.length,
+        totalPages: Math.max(1, Math.ceil(filtered.length / size)),
+        number: page,
+        size,
+      };
     },
   );
 

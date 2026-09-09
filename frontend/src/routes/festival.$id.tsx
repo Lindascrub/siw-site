@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLink } from "../components/AppLink";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -39,6 +44,16 @@ function FestivalDetailPage() {
   const [movies, setMovies] = useState<MovieDTO[]>([]);
   const [screenings, setScreenings] = useState<ScreeningDTO[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState("");
+
+  const screeningDates = useMemo(
+    () => Array.from(new Set(screenings.map((s) => s.date))).sort(),
+    [screenings],
+  );
+  const filteredScreenings = useMemo(
+    () => (dateFilter ? screenings.filter((s) => s.date === dateFilter) : screenings),
+    [screenings, dateFilter],
+  );
 
   useEffect(() => {
     void fetchFestival(festivalId)
@@ -109,6 +124,30 @@ function FestivalDetailPage() {
             Il programma sarà pubblicato a breve.
           </Typography>
         ) : (
+          <>
+            <Stack direction="row" spacing={2} sx={{ mt: 3, alignItems: "center", flexWrap: "wrap" }}>
+              <FormControl sx={{ minWidth: 200 }} size="small">
+                <InputLabel>Data</InputLabel>
+                <Select label="Data" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+                  <MenuItem value="">Tutte le date</MenuItem>
+                  {screeningDates.map((d) => (
+                    <MenuItem key={d} value={d}>
+                      {formatDateShort(d)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {dateFilter && (
+                <Button size="small" onClick={() => setDateFilter("")}>
+                  Azzera filtro
+                </Button>
+              )}
+            </Stack>
+            {filteredScreenings.length === 0 ? (
+              <Typography color="text.secondary" sx={{ mt: 3 }}>
+                Nessuna proiezione in questa data.
+              </Typography>
+            ) : (
           <TableContainer sx={{ mt: 3 }}>
             <Table sx={{ minWidth: 640 }}>
               <TableHead>
@@ -121,7 +160,7 @@ function FestivalDetailPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {screenings.map((s) => (
+                {filteredScreenings.map((s) => (
                   <TableRow key={s.id} hover>
                     <TableCell sx={{ fontWeight: 700 }}>{formatDateShort(s.date)}</TableCell>
                     <TableCell sx={{ color: "primary.main", fontWeight: 800, fontSize: 18 }}>
@@ -151,6 +190,8 @@ function FestivalDetailPage() {
               </TableBody>
             </Table>
           </TableContainer>
+            )}
+          </>
         )}
       </Container>
 

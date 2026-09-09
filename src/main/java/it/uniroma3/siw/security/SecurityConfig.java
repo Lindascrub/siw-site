@@ -57,11 +57,12 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.GET, "/api/festivals", "/api/festivals/**", "/api/movies", "/api/movies/**").permitAll()
 
+                // Documentazione API REST (Swagger UI / OpenAPI spec): solo lettura, nessun dato sensibile esposto
+                .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
                 .requestMatchers(HttpMethod.POST, "/api/movies/*/reviews").hasRole("USER")
                 .requestMatchers(HttpMethod.PUT, "/api/reviews/**").hasRole("USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").hasRole("USER")
-
-                .requestMatchers(HttpMethod.POST, "/movies/*/recensioni").hasRole("USER")
 
                 // NUOVO: protegge tutte le rotte del pannello admin REST
                 // (AdminApiController), usate dalla SPA React

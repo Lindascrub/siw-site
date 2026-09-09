@@ -9,6 +9,8 @@ import it.uniroma3.siw.repository.DirectorRepository;
 import it.uniroma3.siw.repository.MovieRepository;
 import it.uniroma3.siw.repository.ScreeningRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,8 +41,13 @@ public class MovieService {
                 .orElseThrow(() -> new ResourceNotFoundException("Film non trovato: id=" + id));
     }
 
-    public List<Movie> search(String title) {
-        return movieRepository.searchByTitle(title);
+    /** Catalogo pubblico paginato, con ricerca facoltativa per titolo, genere o regista. */
+    public Page<Movie> findAll(Pageable pageable) {
+        return movieRepository.findAll(pageable);
+    }
+
+    public Page<Movie> search(String query, Pageable pageable) {
+        return movieRepository.search(query, pageable);
     }
 
     @Transactional

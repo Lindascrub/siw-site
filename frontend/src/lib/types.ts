@@ -52,6 +52,15 @@ export interface MovieDTO {
   screenings: MovieScreeningDTO[];
 }
 
+/** Rispecchia org.springframework.data.domain.Page nella serializzazione JSON di Spring. */
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // pagina corrente, 0-based
+  size: number;
+}
+
 export interface ScreeningDTO {
   id: number;
   date: string;

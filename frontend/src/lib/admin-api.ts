@@ -104,3 +104,11 @@ export function uploadMoviePoster(movieId: number, file: File): Promise<MovieDTO
     body: formData,
   });
 }
+
+/** Associa/rimuove un film a un festival (relazione molti-a-molti). */
+export function addMovieToFestival(festivalId: number, movieId: number): Promise<void> {
+  return request<void>(`/api/admin/festivals/${festivalId}/movies/${movieId}`, { method: "POST" });
+}
+export function removeMovieFromFestival(festivalId: number, movieId: number): Promise<void> {
+  return request<void>(`/api/admin/festivals/${festivalId}/movies/${movieId}`, { method: "DELETE" });
+}

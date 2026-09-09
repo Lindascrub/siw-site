@@ -5,6 +5,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Container,
@@ -40,10 +41,12 @@ import {
   saveMovie,
   saveScreening,
   saveUser,
+  setFestivalMovie,
   uploadPoster,
   type AdminData,
 } from "../lib/admin-data";
 import { posterUrl } from "../lib/api";
+import { fetchFestivalMovies } from "../lib/data";
 import type {
   DirectorForm,
   FestivalForm,
@@ -52,6 +55,7 @@ import type {
   ScreeningForm,
   UserForm,
 } from "../lib/admin-api";
+import type { FestivalDTO, MovieDTO } from "../lib/types";
 import { formatDate, formatTime } from "../lib/format";
 
 export const Route = createFileRoute("/admin")({
@@ -536,6 +540,7 @@ const emptyFestival: FestivalForm = {
 
 function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<FestivalForm>(emptyFestival);
+  const [moviesPanelFor, setMoviesPanelFor] = useState<number | null>(null);
 
   const submit = () =>
     void run(async () => {
@@ -544,6 +549,7 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
     }, "Festival salvato.");
 
   return (
+    <>
     <Section
       title={form.id ? "Modifica festival" : "Nuovo festival"}
       form={
@@ -610,7 +616,7 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </>
       }
       table={
-        <Table headers={["Nome", "Città", "Anno", "Periodo", ""]}>
+        <Table headers={["Nome", "Città", "Anno", "Periodo", "", ""]}>
           {data.festivals.map((f) => (
             <Row key={f.id}>
               <TableCell sx={{ fontWeight: 600 }}>{f.name}</TableCell>
@@ -618,6 +624,15 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
               <TableCell>{f.year ?? "—"}</TableCell>
               <TableCell>
                 {formatDate(f.startDate)} — {formatDate(f.endDate)}
+              </TableCell>
+              <TableCell>
+                <Button
+                  size="small"
+                  onClick={() => setMoviesPanelFor(moviesPanelFor === f.id ? null : f.id)}
+                  sx={{ minWidth: 0, p: 0, color: moviesPanelFor === f.id ? "primary.main" : "text.secondary" }}
+                >
+                  Film
+                </Button>
               </TableCell>
               <TableCell>
                 <RowActions
@@ -642,6 +657,93 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
         </Table>
       }
     />
+    {moviesPanelFor !== null && (
+      <FestivalMoviesPanel
+        festival={data.festivals.find((f) => f.id === moviesPanelFor)!}
+        allMovies={data.movies}
+        demo={demo}
+        onClose={() => setMoviesPanelFor(null)}
+      />
+    )}
+    </>
+  );
+}
+
+/** Gestisce l'associazione/rimozione dei film di un festival (relazione molti-a-molti). */
+function FestivalMoviesPanel({
+  festival,
+  allMovies,
+  demo,
+  onClose,
+}: {
+  festival: FestivalDTO;
+  allMovies: MovieDTO[];
+  demo: boolean;
+  onClose: () => void;
+}) {
+  const [memberIds, setMemberIds] = useState<Set<number> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<number | null>(null);
+  const festivalId = festival.id as number;
+
+  const reload = useCallback(() => {
+    void fetchFestivalMovies(festivalId).then((movies) => setMemberIds(new Set(movies.map((m) => m.id))));
+  }, [festivalId]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  async function toggle(movieId: number, checked: boolean) {
+    setPending(movieId);
+    setError(null);
+    try {
+      await setFestivalMovie(demo, festivalId, movieId, checked);
+      reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Operazione non riuscita");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Typography variant="h6">Film di “{festival.name}”</Typography>
+        <Button size="small" onClick={onClose}>
+          Chiudi
+        </Button>
+      </Stack>
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
+      {memberIds === null ? (
+        <Typography sx={{ mt: 2 }} color="text.secondary">
+          Caricamento…
+        </Typography>
+      ) : (
+        <Stack sx={{ mt: 2 }}>
+          {allMovies.map((m) => (
+            <Stack
+              key={m.id}
+              direction="row"
+              spacing={1.5}
+              sx={{ alignItems: "center", py: 0.75, borderBottom: 1, borderColor: "divider" }}
+            >
+              <Checkbox
+                checked={memberIds.has(m.id)}
+                disabled={pending === m.id}
+                onChange={(e) => void toggle(m.id, e.target.checked)}
+              />
+              <Typography>{m.title}</Typography>
+            </Stack>
+          ))}
+        </Stack>
+      )}
+    </Paper>
   );
 }
 

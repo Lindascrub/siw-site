@@ -2,12 +2,14 @@
 // raggiungibile, altrimenti lo store dimostrativo in memoria.
 
 import {
+  addMovieToFestival,
   adminDirectors,
   adminFestivals,
   adminHalls,
   adminMovies,
   adminScreenings,
   adminUsers,
+  removeMovieFromFestival,
   uploadMoviePoster,
   type DirectorForm,
   type FestivalForm,
@@ -120,6 +122,19 @@ export async function saveUser(demo: boolean, form: UserForm): Promise<void> {
 export async function deleteUser(demo: boolean, id: number): Promise<void> {
   if (demo) return demoAdmin.deleteUser(id);
   await adminUsers.remove(id);
+}
+
+export async function setFestivalMovie(
+  demo: boolean,
+  festivalId: number,
+  movieId: number,
+  associated: boolean,
+): Promise<void> {
+  if (demo) {
+    throw new Error("L'associazione film-festival non è disponibile in modalità demo.");
+  }
+  if (associated) await addMovieToFestival(festivalId, movieId);
+  else await removeMovieFromFestival(festivalId, movieId);
 }
 
 export async function uploadPoster(demo: boolean, movieId: number, file: File): Promise<void> {

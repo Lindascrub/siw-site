@@ -149,7 +149,7 @@ function MovieDetailPage() {
               {movie.title}
             </Typography>
             <Stack direction="row" spacing={1.5} sx={{ mt: 2, flexWrap: "wrap" }}>
-              {movie.genre && <Chip label={movie.genre} size="small" />}
+              {movie.genre && <Chip label={movie.genre} size="small" color="primary" />}
               {movie.year && <Chip label={movie.year} size="small" variant="outlined" sx={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }} />}
               {movie.duration && <Chip label={formatDuration(movie.duration)} size="small" variant="outlined" sx={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }} />}
               {movie.contryProduction && <Chip label={movie.contryProduction} size="small" variant="outlined" sx={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }} />}
@@ -231,6 +231,18 @@ function MovieDetailPage() {
         <Typography variant="h2" sx={{ fontSize: { xs: 28, sm: 36 }, borderBottom: 2, borderColor: "text.primary", pb: 1.5 }}>
           Recensioni
         </Typography>
+
+        {reviews.length > 0 && (
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mt: 3 }}>
+            <Stars vote={Math.round((reviews.reduce((sum, r) => sum + r.vote, 0) / reviews.length) * 10) / 10} />
+            <Typography sx={{ fontWeight: 700 }}>
+              {(reviews.reduce((sum, r) => sum + r.vote, 0) / reviews.length).toFixed(1)} / 5
+            </Typography>
+            <Typography color="text.secondary">
+              ({reviews.length} {reviews.length === 1 ? "recensione" : "recensioni"})
+            </Typography>
+          </Stack>
+        )}
 
         {reviews.length === 0 ? (
           <Typography color="text.secondary" sx={{ mt: 4 }}>

@@ -6,6 +6,7 @@ import type {
   CurrentUserDTO,
   FestivalDTO,
   MovieDTO,
+  PageResponse,
   RegisterRequest,
   ReviewDTO,
   ScreeningDTO,
@@ -106,8 +107,11 @@ export const getFestivalMovies = (id: number) =>
 export const getFestivalScreenings = (id: number) =>
   request<ScreeningDTO[]>(`/api/festivals/${id}/screenings`);
 
-export const getMovies = (search?: string) =>
-  request<MovieDTO[]>(search ? `/api/movies?search=${encodeURIComponent(search)}` : "/api/movies");
+export function getMovies(search?: string, page = 0, size = 12): Promise<PageResponse<MovieDTO>> {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (search) params.set("search", search);
+  return request<PageResponse<MovieDTO>>(`/api/movies?${params.toString()}`);
+}
 export const getMovie = (id: number) => request<MovieDTO>(`/api/movies/${id}`);
 export const getMovieReviews = (id: number) => request<ReviewDTO[]>(`/api/movies/${id}/reviews`);
 
