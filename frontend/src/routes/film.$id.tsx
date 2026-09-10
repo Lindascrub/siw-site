@@ -18,7 +18,6 @@ import Typography from "@mui/material/Typography";
 import { ApiError, posterUrl } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { editReview, fetchMovie, fetchMovieReviews, removeReview, submitReview } from "../lib/data";
-import { demoPosters } from "../lib/demo-data";
 import { formatDate, formatDuration, formatTime } from "../lib/format";
 import { Stars, StarPicker } from "../components/Stars";
 import type { MovieDTO, ReviewDTO } from "../lib/types";
@@ -38,7 +37,7 @@ export const Route = createFileRoute("/film/$id")({
 function MovieDetailPage() {
   const { id } = Route.useParams();
   const movieId = Number(id);
-  const { user, demo } = useAuth();
+  const { user } = useAuth();
 
   const [movie, setMovie] = useState<MovieDTO | null>(null);
   const [reviews, setReviews] = useState<ReviewDTO[]>([]);
@@ -104,9 +103,9 @@ function MovieDetailPage() {
     try {
       const wasEditing = !!editingId;
       if (editingId) {
-        await editReview(demo, editingId, reviewText.trim(), reviewVote);
+        await editReview(editingId, reviewText.trim(), reviewVote);
       } else if (user) {
-        await submitReview(demo, movieId, reviewText.trim(), reviewVote, user);
+        await submitReview(movieId, reviewText.trim(), reviewVote);
       }
       resetForm();
       await loadReviews();
@@ -123,7 +122,7 @@ function MovieDetailPage() {
     setBusy(true);
     setNotice(null);
     try {
-      await removeReview(demo, reviewId);
+      await removeReview(reviewId);
       if (editingId === reviewId) resetForm();
       await loadReviews();
       setNotice("Recensione eliminata.");
@@ -152,7 +151,7 @@ function MovieDetailPage() {
     );
   }
 
-  const poster = posterUrl(movie.posterFilename) ?? demoPosters[movie.id];
+  const poster = posterUrl(movie.posterFilename);
 
   return (
     <Box>

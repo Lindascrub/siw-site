@@ -25,7 +25,7 @@ export const Route = createFileRoute("/register")({
 });
 
 function RegisterPage() {
-  const { register, demo } = useAuth();
+  const { register } = useAuth();
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -53,19 +53,17 @@ function RegisterPage() {
           Account creato con successo
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 2 }}>
-          {demo
-            ? "Sei stata registrata in modalità demo: puoi già navigare come utente."
-            : `Benvenuta, ${form.name}! Ora puoi accedere con lo username che hai scelto.`}
+          Benvenuta, {form.name}! Ora puoi accedere con lo username che hai scelto.
         </Typography>
         <Button
           component={Link}
-          to={demo ? "/" : "/login"}
+          to="/login"
           variant="contained"
           color="primary"
           size="large"
           sx={{ mt: 4 }}
         >
-          {demo ? "Vai alla home" : "Vai al login"}
+          Vai al login
         </Button>
       </Container>
     );

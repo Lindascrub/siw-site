@@ -38,11 +38,6 @@ export class ApiError extends Error {
   }
 }
 
-/** Errore di rete: backend non raggiungibile (es. Spring Boot non avviato). */
-export function isNetworkError(e: unknown): boolean {
-  return e instanceof TypeError;
-}
-
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
@@ -126,7 +121,7 @@ export interface MovieQuery {
   directorId?: number | undefined;
   page?: number;
   size?: number;
-  sortBy?: "title" | "year" | "duration";
+  sortBy?: "title" | "year" | "duration" | "rating";
   sortDir?: "asc" | "desc";
 }
 

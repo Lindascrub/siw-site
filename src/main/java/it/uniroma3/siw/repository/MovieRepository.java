@@ -76,4 +76,35 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             + "ORDER BY COALESCE(AVG(r.vote), 0) DESC, COUNT(r.id) DESC, m.title ASC",
             nativeQuery = true)
     List<Movie> findTopRated(Pageable pageable);
+
+    /**
+     * Come {@link #search}, ma ordinato per media voti decrescente (dal piu'
+     * al meno votato) invece che per un campo dell'entita'. La media non e'
+     * una colonna di movie, quindi qui serve una query nativa con GROUP BY
+     * sulle reviews (stesso principio di {@link #findTopRated}), con gli
+     * stessi filtri opzionali facoltativi/combinabili di search.
+     */
+    @Query(value = "SELECT m.* FROM movie m "
+            + "LEFT JOIN director d ON d.id = m.director_id "
+            + "LEFT JOIN reviews r ON r.movie_id = m.id "
+            + "WHERE (CAST(:q as text) IS NULL OR "
+            + "lower(m.title) LIKE lower(concat('%', CAST(:q as text), '%')) OR "
+            + "lower(m.genre) LIKE lower(concat('%', CAST(:q as text), '%')) OR "
+            + "lower(d.name) LIKE lower(concat('%', CAST(:q as text), '%')) OR "
+            + "lower(d.surname) LIKE lower(concat('%', CAST(:q as text), '%'))) "
+            + "AND (CAST(:genre as text) IS NULL OR m.genre = CAST(:genre as text)) "
+            + "AND (CAST(:directorId as bigint) IS NULL OR m.director_id = CAST(:directorId as bigint)) "
+            + "GROUP BY m.id "
+            + "ORDER BY COALESCE(AVG(r.vote), 0) DESC, COUNT(r.id) DESC, m.title ASC",
+            countQuery = "SELECT COUNT(DISTINCT m.id) FROM movie m "
+            + "LEFT JOIN director d ON d.id = m.director_id "
+            + "WHERE (CAST(:q as text) IS NULL OR "
+            + "lower(m.title) LIKE lower(concat('%', CAST(:q as text), '%')) OR "
+            + "lower(m.genre) LIKE lower(concat('%', CAST(:q as text), '%')) OR "
+            + "lower(d.name) LIKE lower(concat('%', CAST(:q as text), '%')) OR "
+            + "lower(d.surname) LIKE lower(concat('%', CAST(:q as text), '%'))) "
+            + "AND (CAST(:genre as text) IS NULL OR m.genre = CAST(:genre as text)) "
+            + "AND (CAST(:directorId as bigint) IS NULL OR m.director_id = CAST(:directorId as bigint))",
+            nativeQuery = true)
+    Page<Movie> searchSortedByRating(@Param("q") String query, @Param("genre") String genre, @Param("directorId") Long directorId, Pageable pageable);
 }

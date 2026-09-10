@@ -36,6 +36,9 @@ public class MovieApiController {
      * genere e nome/cognome del regista - vedi MovieRepository.search.
      * sortBy/sortDir sono validati contro una whitelist per evitare di
      * esporre nomi di proprieta' arbitrari nella query di ordinamento.
+     * "rating" e' un caso speciale: la media voti non e' un campo di Movie,
+     * quindi non passa per Sort/Pageable ma per una query nativa dedicata
+     * (vedi MovieRepository.searchSortedByRating), sempre dal piu' votato.
      */
     @GetMapping
     public Page<MovieDTO> getAll(@RequestParam(required = false) String search,
@@ -45,10 +48,17 @@ public class MovieApiController {
                                   @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
                                   @RequestParam(defaultValue = "title") String sortBy,
                                   @RequestParam(defaultValue = "asc") String sortDir) {
-        String field = SORTABLE_FIELDS.contains(sortBy) ? sortBy : "title";
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, field));
-        Page<Movie> result = movieService.search(search, genre, directorId, pageable);
+        Page<Movie> result;
+        Pageable pageable;
+        if ("rating".equals(sortBy)) {
+            pageable = PageRequest.of(page, size);
+            result = movieService.searchSortedByRating(search, genre, directorId, pageable);
+        } else {
+            String field = SORTABLE_FIELDS.contains(sortBy) ? sortBy : "title";
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            pageable = PageRequest.of(page, size, Sort.by(direction, field));
+            result = movieService.search(search, genre, directorId, pageable);
+        }
         List<MovieDTO> enriched = movieService.enrichWithStats(result.getContent().stream().map(MovieDTO::from).toList());
         return new PageImpl<>(enriched, pageable, result.getTotalElements());
     }

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/profilo")({
 });
 
 function ProfiloPage() {
-  const { user, demo, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [reviews, setReviews] = useState<MyReviewDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -73,7 +73,7 @@ function ProfiloPage() {
     setBusy(true);
     setError(null);
     try {
-      await editReview(demo, editingId, text.trim(), vote);
+      await editReview(editingId, text.trim(), vote);
       cancelEdit();
       await load();
     } catch (e) {
@@ -88,7 +88,7 @@ function ProfiloPage() {
     setBusy(true);
     setError(null);
     try {
-      await removeReview(demo, id);
+      await removeReview(id);
       if (editingId === id) cancelEdit();
       await load();
     } catch (e) {

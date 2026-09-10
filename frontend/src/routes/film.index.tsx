@@ -12,12 +12,13 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { MovieCard } from "../components/MovieCard";
-import { fetchMovieGenres, fetchMovies } from "../lib/data";
-import type { MovieDTO } from "../lib/types";
+import { fetchMovieDirectors, fetchMovieGenres, fetchMovies } from "../lib/data";
+import type { DirectorDTO, MovieDTO } from "../lib/types";
 
 const PAGE_SIZE = 20;
 const ALL_GENRES = "__all__";
-type SortBy = "title" | "year" | "duration";
+const ALL_DIRECTORS = 0;
+type SortBy = "title" | "year" | "duration" | "rating";
 const SORT_OPTIONS: { value: `${SortBy}-${"asc" | "desc"}`; label: string }[] = [
   { value: "title-asc", label: "Titolo (A-Z)" },
   { value: "title-desc", label: "Titolo (Z-A)" },
@@ -25,6 +26,7 @@ const SORT_OPTIONS: { value: `${SortBy}-${"asc" | "desc"}`; label: string }[] = 
   { value: "year-asc", label: "Anno (meno recenti)" },
   { value: "duration-asc", label: "Durata (crescente)" },
   { value: "duration-desc", label: "Durata (decrescente)" },
+  { value: "rating-desc", label: "Valutazione (dal più votato)" },
 ];
 
 export const Route = createFileRoute("/film/")({
@@ -49,6 +51,8 @@ function MovieCatalogPage() {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState(ALL_GENRES);
   const [genres, setGenres] = useState<string[]>([]);
+  const [directorId, setDirectorId] = useState<number>(ALL_DIRECTORS);
+  const [directors, setDirectors] = useState<DirectorDTO[]>([]);
   const [sort, setSort] = useState<`${SortBy}-${"asc" | "desc"}`>("title-asc");
   const [page, setPage] = useState(0); // 0-based, come l'API
   const [movies, setMovies] = useState<MovieDTO[]>([]);
@@ -58,12 +62,13 @@ function MovieCatalogPage() {
 
   useEffect(() => {
     void fetchMovieGenres().then(setGenres).catch(() => setGenres([]));
+    void fetchMovieDirectors().then(setDirectors).catch(() => setDirectors([]));
   }, []);
 
   // ogni nuova ricerca/filtro/ordinamento riparte dalla prima pagina
   useEffect(() => {
     setPage(0);
-  }, [search, genre, sort]);
+  }, [search, genre, directorId, sort]);
 
   useEffect(() => {
     setLoading(true);
@@ -72,6 +77,7 @@ function MovieCatalogPage() {
       void fetchMovies({
         search: search || undefined,
         genre: genre === ALL_GENRES ? undefined : genre,
+        directorId: directorId === ALL_DIRECTORS ? undefined : directorId,
         page,
         size: PAGE_SIZE,
         sortBy,
@@ -90,7 +96,7 @@ function MovieCatalogPage() {
         .finally(() => setLoading(false));
     }, 250); // debounce
     return () => clearTimeout(handle);
-  }, [search, genre, sort, page]);
+  }, [search, genre, directorId, sort, page]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -125,6 +131,21 @@ function MovieCatalogPage() {
             {genres.map((g) => (
               <MenuItem key={g} value={g}>
                 {g}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 200 }} size="small">
+          <InputLabel>Regista</InputLabel>
+          <Select
+            label="Regista"
+            value={directorId}
+            onChange={(e) => setDirectorId(Number(e.target.value))}
+          >
+            <MenuItem value={ALL_DIRECTORS}>Tutti i registi</MenuItem>
+            {directors.map((d) => (
+              <MenuItem key={d.id} value={d.id}>
+                {d.name} {d.surname}
               </MenuItem>
             ))}
           </Select>

@@ -20,7 +20,6 @@ import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
-import Alert from "@mui/material/Alert";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import TwitterIcon from "@mui/icons-material/Twitter";
@@ -143,7 +142,7 @@ const navSx = {
 };
 
 function SiteHeader() {
-  const { user, demo, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const isAdmin = !!user && user.role.toUpperCase().includes("ADMIN");
 
@@ -193,7 +192,6 @@ function SiteHeader() {
           </Stack>
 
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", ml: { xs: "auto", md: 3 } }}>
-            {demo && <Chip label="Demo" size="small" variant="outlined" color="primary" />}
             {user ? (
               <>
                 <AppLink
@@ -247,18 +245,6 @@ function SiteHeader() {
         </Stack>
       </Container>
     </AppBar>
-  );
-}
-
-function DemoBanner() {
-  const { demo } = useAuth();
-  if (!demo) return null;
-  return (
-    <Alert severity="warning" variant="filled" sx={{ borderRadius: 0, justifyContent: "center" }}>
-      <strong>Modalità demo attiva:</strong> il backend Spring Boot non è raggiungibile in questo
-      momento — i dati mostrati sono di esempio, non reali. Verifica che il backend sia avviato su{" "}
-      <code>localhost:8080</code>.
-    </Alert>
   );
 }
 
@@ -407,7 +393,6 @@ function RootComponent() {
         <AuthProvider>
           <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
             <SiteHeader />
-            <DemoBanner />
             <Box component="main" sx={{ flex: 1 }}>
               <Outlet />
             </Box>

@@ -114,15 +114,12 @@ function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState<TabKey>("film");
   const [data, setData] = useState<AdminData | null>(null);
-  const [demo, setDemo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const res = await loadAdminData();
-    setData(res.data);
-    setDemo(res.demo);
+    setData(await loadAdminData());
   }, []);
 
   useEffect(() => {
@@ -195,10 +192,8 @@ function AdminPage() {
         Gestione contenuti
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary", mt: 2, maxWidth: 640 }}>
-        Aggiungi, modifica ed elimina film, festival e proiezioni direttamente dal browser.
-        {demo
-          ? " Il backend non risponde: stai lavorando sui dati dimostrativi (le modifiche restano solo in questa sessione)."
-          : " Le modifiche vengono salvate sul backend Spring Boot."}
+        Aggiungi, modifica ed elimina film, festival e proiezioni direttamente dal browser. Le
+        modifiche vengono salvate sul backend Spring Boot.
       </Typography>
 
       <Box sx={{ mt: 4, borderBottom: 2, borderColor: "text.primary" }}>
@@ -230,22 +225,22 @@ function AdminPage() {
       ) : (
         <Box sx={{ mt: 4 }}>
           {tab === "film" && (
-            <MoviesTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} demo={demo} />
+            <MoviesTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} />
           )}
           {tab === "festival" && (
-            <FestivalsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} demo={demo} />
+            <FestivalsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} />
           )}
           {tab === "proiezioni" && (
-            <ScreeningsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} demo={demo} />
+            <ScreeningsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} />
           )}
           {tab === "registi" && (
-            <DirectorsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} demo={demo} />
+            <DirectorsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} />
           )}
           {tab === "sale" && (
-            <HallsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} demo={demo} />
+            <HallsTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} />
           )}
           {tab === "utenti" && (
-            <UsersTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} demo={demo} />
+            <UsersTab data={data} busy={busy} run={run} confirmAndRun={confirmAndRun} />
           )}
         </Box>
       )}
@@ -258,7 +253,6 @@ const MuiTab = Tab;
 
 interface TabProps {
   data: AdminData;
-  demo: boolean;
   busy: boolean;
   run: (action: () => Promise<void>, message: string) => Promise<void>;
   confirmAndRun: (label: string, action: () => Promise<void>) => void;
@@ -471,7 +465,7 @@ const emptyMovie: MovieForm = {
 const MOVIE_ALL_GENRES = "__all__";
 type MovieSort = "title-asc" | "title-desc" | "year-desc" | "year-asc" | "duration-asc" | "duration-desc";
 
-function MoviesTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
+function MoviesTab({ data, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<MovieForm>(emptyMovie);
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState(MOVIE_ALL_GENRES);
@@ -479,7 +473,7 @@ function MoviesTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
 
   const submit = () =>
     void run(async () => {
-      await saveMovie(demo, form);
+      await saveMovie(form);
       setForm(emptyMovie);
     }, "Film salvato.");
 
@@ -622,7 +616,7 @@ function MoviesTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                   <PosterCell
                     movieId={m.id}
                     posterFilename={m.posterFilename}
-                    onUpload={(file) => run(() => uploadPoster(demo, m.id, file), "Locandina caricata.")}
+                    onUpload={(file) => run(() => uploadPoster(m.id, file), "Locandina caricata.")}
                   />
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>{m.title}</TableCell>
@@ -642,7 +636,7 @@ function MoviesTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                         directorId: m.director?.id ?? null,
                       })
                     }
-                    onDelete={() => confirmAndRun(`il film “${m.title}”`, () => deleteMovie(demo, m.id))}
+                    onDelete={() => confirmAndRun(`il film “${m.title}”`, () => deleteMovie(m.id))}
                   />
                 </TableCell>
               </Row>
@@ -670,7 +664,7 @@ const emptyFestival: FestivalForm = {
 const FESTIVAL_ALL = "__all__";
 type FestivalSort = "startDate-asc" | "startDate-desc" | "name-asc" | "name-desc" | "year-desc" | "year-asc";
 
-function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
+function FestivalsTab({ data, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<FestivalForm>(emptyFestival);
   const [moviesPanelFor, setMoviesPanelFor] = useState<number | null>(null);
   const [city, setCity] = useState(FESTIVAL_ALL);
@@ -679,7 +673,7 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
 
   const submit = () =>
     void run(async () => {
-      await saveFestival(demo, form);
+      await saveFestival(form);
       setForm(emptyFestival);
     }, "Festival salvato.");
 
@@ -846,7 +840,7 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                       })
                     }
                     onDelete={() =>
-                      confirmAndRun(`il festival “${f.name}”`, () => deleteFestival(demo, f.id))
+                      confirmAndRun(`il festival “${f.name}”`, () => deleteFestival(f.id))
                     }
                   />
                 </TableCell>
@@ -861,7 +855,6 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
       <FestivalMoviesPanel
         festival={data.festivals.find((f) => f.id === moviesPanelFor)!}
         allMovies={data.movies}
-        demo={demo}
         onClose={() => setMoviesPanelFor(null)}
       />
     )}
@@ -873,12 +866,10 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
 function FestivalMoviesPanel({
   festival,
   allMovies,
-  demo,
   onClose,
 }: {
   festival: FestivalDTO;
   allMovies: MovieDTO[];
-  demo: boolean;
   onClose: () => void;
 }) {
   const [memberIds, setMemberIds] = useState<Set<number> | null>(null);
@@ -898,7 +889,7 @@ function FestivalMoviesPanel({
     setPending(movieId);
     setError(null);
     try {
-      await setFestivalMovie(demo, festivalId, movieId, checked);
+      await setFestivalMovie(festivalId, movieId, checked);
       reload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Operazione non riuscita");
@@ -961,14 +952,14 @@ const emptyScreening: ScreeningForm = {
 const SCREENING_ALL_FESTIVALS = "__all__";
 type ScreeningSort = "date-asc" | "date-desc" | "movie-asc" | "movie-desc";
 
-function ScreeningsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
+function ScreeningsTab({ data, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<ScreeningForm>(emptyScreening);
   const [festivalFilter, setFestivalFilter] = useState<string>(SCREENING_ALL_FESTIVALS);
   const [sort, setSort] = useState<ScreeningSort>("date-asc");
 
   const submit = () =>
     void run(async () => {
-      await saveScreening(demo, form);
+      await saveScreening(form);
       setForm(emptyScreening);
     }, "Proiezione salvata.");
 
@@ -1121,7 +1112,7 @@ function ScreeningsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                     }
                     onDelete={() =>
                       confirmAndRun(`la proiezione di “${s.movie.title}”`, () =>
-                        deleteScreening(demo, s.id),
+                        deleteScreening(s.id),
                       )
                     }
                   />
@@ -1148,14 +1139,14 @@ const emptyDirector: DirectorForm = {
 
 type DirectorSort = "surname-asc" | "surname-desc" | "nationality-asc" | "birthDate-desc" | "birthDate-asc";
 
-function DirectorsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
+function DirectorsTab({ data, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<DirectorForm>(emptyDirector);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<DirectorSort>("surname-asc");
 
   const submit = () =>
     void run(async () => {
-      await saveDirector(demo, form);
+      await saveDirector(form);
       setForm(emptyDirector);
     }, "Regista salvato.");
 
@@ -1272,7 +1263,7 @@ function DirectorsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                       })
                     }
                     onDelete={() =>
-                      confirmAndRun(`il regista ${d.name} ${d.surname}`, () => deleteDirector(demo, d.id))
+                      confirmAndRun(`il regista ${d.name} ${d.surname}`, () => deleteDirector(d.id))
                     }
                   />
                 </TableCell>
@@ -1292,14 +1283,14 @@ const emptyHall: HallForm = { id: null, name: "", address: "", capacity: null };
 
 type HallSort = "name-asc" | "name-desc" | "capacity-desc" | "capacity-asc";
 
-function HallsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
+function HallsTab({ data, busy, run, confirmAndRun }: TabProps) {
   const [form, setForm] = useState<HallForm>(emptyHall);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<HallSort>("name-asc");
 
   const submit = () =>
     void run(async () => {
-      await saveHall(demo, form);
+      await saveHall(form);
       setForm(emptyHall);
     }, "Sala salvata.");
 
@@ -1396,7 +1387,7 @@ function HallsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                         capacity: h.capacity,
                       })
                     }
-                    onDelete={() => confirmAndRun(`la sala “${h.name}”`, () => deleteHall(demo, h.id))}
+                    onDelete={() => confirmAndRun(`la sala “${h.name}”`, () => deleteHall(h.id))}
                   />
                 </TableCell>
               </Row>
@@ -1424,7 +1415,7 @@ const emptyUser: UserForm = {
 const USER_ALL_ROLES = "__all__";
 type UserSort = "username-asc" | "username-desc";
 
-function UsersTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
+function UsersTab({ data, busy, run, confirmAndRun }: TabProps) {
   const { user: current } = useAuth();
   const [form, setForm] = useState<UserForm>(emptyUser);
   const [roleFilter, setRoleFilter] = useState(USER_ALL_ROLES);
@@ -1432,7 +1423,7 @@ function UsersTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
 
   const submit = () =>
     void run(async () => {
-      await saveUser(demo, form);
+      await saveUser(form);
       setForm(emptyUser);
     }, "Utente salvato.");
 
@@ -1574,7 +1565,7 @@ function UsersTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
                         window.alert("Non puoi eliminare l'account con cui hai effettuato l'accesso.");
                         return;
                       }
-                      confirmAndRun(`l'utente “${u.username}”`, () => deleteUser(demo, u.id));
+                      confirmAndRun(`l'utente “${u.username}”`, () => deleteUser(u.id));
                     }}
                   />
                 </TableCell>

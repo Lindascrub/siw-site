@@ -56,6 +56,15 @@ public class MovieService {
                 pageable);
     }
 
+    /** Come {@link #search}, ma ordinato per media voti decrescente (dal piu' al meno votato). */
+    public Page<Movie> searchSortedByRating(String query, String genre, Long directorId, Pageable pageable) {
+        return movieRepository.searchSortedByRating(
+                (query == null || query.isBlank()) ? null : query,
+                (genre == null || genre.isBlank()) ? null : genre,
+                directorId,
+                pageable);
+    }
+
     public List<String> findDistinctGenres() {
         return movieRepository.findDistinctGenres();
     }

@@ -5,7 +5,6 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { demoPosters } from "../lib/demo-data";
 import { posterUrl } from "../lib/api";
 import { directorName, formatDuration } from "../lib/format";
 import { Stars } from "./Stars";
@@ -13,9 +12,7 @@ import type { MovieDTO } from "../lib/types";
 
 /** Card film in stile locandina, con hover zoom come nei siti di festival. */
 export function MovieCard({ movie }: { movie: MovieDTO }) {
-  // priorita' alla locandina vera caricata da admin; il placeholder demo
-  // resta solo come fallback decorativo per i film che non ne hanno ancora una
-  const poster = posterUrl(movie.posterFilename) ?? demoPosters[movie.id];
+  const poster = posterUrl(movie.posterFilename);
   return (
     <AppLink
       
