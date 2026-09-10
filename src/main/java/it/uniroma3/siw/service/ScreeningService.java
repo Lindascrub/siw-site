@@ -95,18 +95,6 @@ public class ScreeningService {
         screeningRepository.delete(findById(id));
     }
 
-    public List<Screening> findByFestivalLazy(Long festivalId) {
-        return screeningRepository.findByFestivalId(festivalId);
-    }
-
-    public List<Screening> findByFestivalJoinFetch(Long festivalId) {
-        return screeningRepository.findByFestivalIdJoinFetch(festivalId);
-    }
-
-    public List<Screening> findByFestivalEntityGraph(Long festivalId) {
-        return screeningRepository.findByFestivalIdEntityGraph(festivalId);
-    }
-
     private void checkAvailability(Long hallId, java.time.LocalDate date, LocalTime time, int movieDurationMinutes) {
         LocalTime startTime = time.minusMinutes(movieDurationMinutes + BUFFER_MINUTES);
         LocalTime endTime = time.plusMinutes(movieDurationMinutes + BUFFER_MINUTES);

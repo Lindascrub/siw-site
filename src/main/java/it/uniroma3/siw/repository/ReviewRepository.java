@@ -9,12 +9,10 @@ import it.uniroma3.siw.model.Review;
 import it.uniroma3.siw.modelDTO.MovieRatingStats;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 	  List<Review> findByMovieIdOrderByDateDesc(Long movieId);
-	  Optional<Review> findByMovieIdAndUserId(Long movieId, Long userId);
 	  boolean existsByMovieIdAndUserId(Long movieId, Long userId);
 	  List<Review> findByUserIdOrderByDateDesc(Long userId);
 

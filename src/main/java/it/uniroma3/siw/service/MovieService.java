@@ -154,7 +154,4 @@ public class MovieService {
         m.setContryProduction(form.getContryProduction());
         m.setDirector(director);
     }
-    public List<Director> findDirectorsForFilter() {
-        return movieRepository.findDirectorsWithMovies();
-    }
 }
