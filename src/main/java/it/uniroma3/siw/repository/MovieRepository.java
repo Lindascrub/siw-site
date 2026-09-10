@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import it.uniroma3.siw.model.Director;
 import it.uniroma3.siw.model.Movie;
 
 @Repository
@@ -44,19 +46,22 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             + "lower(m.genre) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
             + "lower(m.director.name) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
             + "lower(m.director.surname) LIKE lower(concat('%', CAST(:q as string), '%'))) "
-            + "AND (CAST(:genre as string) IS NULL OR m.genre = CAST(:genre as string))",
+            + "AND (CAST(:genre as string) IS NULL OR m.genre = CAST(:genre as string)) "
+            + "AND (CAST(:directorId as long) IS NULL OR m.director.id = CAST(:directorId as long))",
             countQuery = "SELECT COUNT(m) FROM Movie m WHERE "
             + "(CAST(:q as string) IS NULL OR "
             + "lower(m.title) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
             + "lower(m.genre) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
             + "lower(m.director.name) LIKE lower(concat('%', CAST(:q as string), '%')) OR "
             + "lower(m.director.surname) LIKE lower(concat('%', CAST(:q as string), '%'))) "
-            + "AND (CAST(:genre as string) IS NULL OR m.genre = CAST(:genre as string))")
-    Page<Movie> search(@Param("q") String query, @Param("genre") String genre, Pageable pageable);
-
-    /** Elenco distinto dei generi presenti, per popolare il filtro a tendina. */
+            + "AND (CAST(:genre as string) IS NULL OR m.genre = CAST(:genre as string)) "
+            + "AND (CAST(:directorId as long) IS NULL OR m.director.id = CAST(:directorId as long))")
+    Page<Movie> search(@Param("q") String query, @Param("genre") String genre, @Param("directorId") Long directorId, Pageable pageable);
+     /** Elenco distinto dei generi presenti, per popolare il filtro a tendina. */
     @Query("SELECT DISTINCT m.genre FROM Movie m ORDER BY m.genre")
     List<String> findDistinctGenres();
+    @Query("SELECT DISTINCT m.director FROM Movie m ORDER BY m.director.surname")
+    List<Director> findDirectorsWithMovies();
 
     /**
      * Film ordinati per media voti decrescente (a parita' di media, per numero

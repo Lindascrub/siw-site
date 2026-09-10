@@ -48,16 +48,21 @@ public class MovieService {
     }
 
     /** Catalogo pubblico paginato, con ricerca e filtro per genere facoltativi. */
-    public Page<Movie> search(String query, String genre, Pageable pageable) {
+    public Page<Movie> search(String query, String genre, Long directorId,Pageable pageable) {
         return movieRepository.search(
                 (query == null || query.isBlank()) ? null : query,
                 (genre == null || genre.isBlank()) ? null : genre,
+                directorId,
                 pageable);
     }
 
     public List<String> findDistinctGenres() {
         return movieRepository.findDistinctGenres();
     }
+    public List<Director> findDirectorsWithMovies() {
+        return movieRepository.findDirectorsWithMovies();
+    }
+
 
     /**
      * Arricchisce una lista di MovieDTO con media voti e numero di recensioni,
@@ -139,5 +144,8 @@ public class MovieService {
         m.setGenre(form.getGenre());
         m.setContryProduction(form.getContryProduction());
         m.setDirector(director);
+    }
+    public List<Director> findDirectorsForFilter() {
+        return movieRepository.findDirectorsWithMovies();
     }
 }

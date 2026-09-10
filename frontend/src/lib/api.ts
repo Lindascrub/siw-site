@@ -11,6 +11,7 @@ import type {
   RegisterRequest,
   ReviewDTO,
   ScreeningDTO,
+  DirectorDTO,
 } from "./types";
 
 export const API_BASE: string =
@@ -122,6 +123,7 @@ export const getFestivalScreenings = (id: number) =>
 export interface MovieQuery {
   search?: string | undefined;
   genre?: string | undefined;
+  directorId?: number | undefined;
   page?: number;
   size?: number;
   sortBy?: "title" | "year" | "duration";
@@ -137,10 +139,12 @@ export function getMovies(q: MovieQuery = {}): Promise<PageResponse<MovieDTO>> {
   });
   if (q.search) params.set("search", q.search);
   if (q.genre) params.set("genre", q.genre);
+  if (q.directorId) params.set("directorId", String(q.directorId));
   return request<PageResponse<MovieDTO>>(`/api/movies?${params.toString()}`);
 }
 
 export const getMovieGenres = () => request<string[]>("/api/movies/genres");
+export const getMovieDirectors = () => request<DirectorDTO[]>("/api/movies/directors");
 export const getTopRatedMovies = (limit = 6) =>
   request<MovieDTO[]>(`/api/movies/top-rated?limit=${limit}`);
 export const getMovie = (id: number) => request<MovieDTO>(`/api/movies/${id}`);

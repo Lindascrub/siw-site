@@ -1,6 +1,7 @@
 package it.uniroma3.siw.controllerApi;
 
 import it.uniroma3.siw.model.Movie;
+import it.uniroma3.siw.modelDTO.DirectorDTO;
 import it.uniroma3.siw.modelDTO.MovieDTO;
 import it.uniroma3.siw.modelDTO.MovieScreeningDTO;
 import it.uniroma3.siw.modelDTO.ReviewDTO;
@@ -39,6 +40,7 @@ public class MovieApiController {
     @GetMapping
     public Page<MovieDTO> getAll(@RequestParam(required = false) String search,
                                   @RequestParam(required = false) String genre,
+                                  @RequestParam(required = false) Long directorId,
                                   @RequestParam(defaultValue = "0") int page,
                                   @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
                                   @RequestParam(defaultValue = "title") String sortBy,
@@ -46,7 +48,7 @@ public class MovieApiController {
         String field = SORTABLE_FIELDS.contains(sortBy) ? sortBy : "title";
         Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, field));
-        Page<Movie> result = movieService.search(search, genre, pageable);
+        Page<Movie> result = movieService.search(search, genre, directorId, pageable);
         List<MovieDTO> enriched = movieService.enrichWithStats(result.getContent().stream().map(MovieDTO::from).toList());
         return new PageImpl<>(enriched, pageable, result.getTotalElements());
     }
@@ -74,5 +76,10 @@ public class MovieApiController {
     @GetMapping("/{id}/reviews")
     public List<ReviewDTO> getReviews(@PathVariable Long id) {
         return reviewService.findByMovie(id).stream().map(ReviewDTO::from).toList();
+    }
+    
+    @GetMapping("/directors")
+    public List<DirectorDTO> getDirectors() {
+        return movieService.findDirectorsWithMovies().stream().map(DirectorDTO::from).toList();
     }
 }
