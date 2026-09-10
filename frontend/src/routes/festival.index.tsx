@@ -17,7 +17,7 @@ import { formatDate } from "../lib/format";
 import type { FestivalDTO } from "../lib/types";
 
 const ALL = "__all__";
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 type SortKey = "startDate-desc" | "startDate-asc" | "name-asc" | "name-desc" | "year-desc" | "year-asc";
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "startDate-asc", label: "Data (più vicine prima)" },

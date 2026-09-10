@@ -84,6 +84,16 @@ export interface ReviewDTO {
   username: string;
 }
 
+/** Recensione dell'utente loggato, con titolo del film gia' incluso (pagina Profilo). */
+export interface MyReviewDTO {
+  id: number;
+  text: string;
+  vote: number;
+  date: string;
+  movieId: number;
+  movieTitle: string;
+}
+
 export interface CurrentUserDTO {
   id: number;
   username: string;

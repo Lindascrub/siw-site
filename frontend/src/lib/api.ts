@@ -6,6 +6,7 @@ import type {
   CurrentUserDTO,
   FestivalDTO,
   MovieDTO,
+  MyReviewDTO,
   PageResponse,
   RegisterRequest,
   ReviewDTO,
@@ -27,9 +28,12 @@ export function posterUrl(filename: string | null | undefined): string | null {
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Messaggi di validazione per singolo campo (es. "Il titolo è obbligatorio"), quando presenti. */
+  details: string[];
+  constructor(status: number, message: string, details: string[] = []) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -45,13 +49,21 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     let message = res.statusText;
+    let details: string[] = [];
     try {
       const body = await res.json();
       message = body.message ?? body.error ?? message;
+      if (Array.isArray(body.details) && body.details.length > 0) {
+        details = body.details;
+        // Cosi' chi si limita a leggere err.message (la maggior parte del
+        // codice esistente) vede comunque il dettaglio del campo mancante,
+        // es. "Errore di validazione: Il titolo è obbligatorio, ...".
+        message = `${message}: ${details.join(", ")}`;
+      }
     } catch {
       /* corpo non JSON */
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, details);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
@@ -133,6 +145,7 @@ export const getTopRatedMovies = (limit = 6) =>
   request<MovieDTO[]>(`/api/movies/top-rated?limit=${limit}`);
 export const getMovie = (id: number) => request<MovieDTO>(`/api/movies/${id}`);
 export const getMovieReviews = (id: number) => request<ReviewDTO[]>(`/api/movies/${id}/reviews`);
+export const getMyReviews = () => request<MyReviewDTO[]>("/api/reviews/mine");
 
 export const createReview = (movieId: number, text: string, vote: number) =>
   request<ReviewDTO>(`/api/movies/${movieId}/reviews`, {

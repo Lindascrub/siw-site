@@ -12,7 +12,7 @@ import {
   demoScreenings,
   demoUpdateReview,
 } from "./demo-data";
-import type { FestivalDTO, MovieDTO, PageResponse, ReviewDTO, ScreeningDTO } from "./types";
+import type { FestivalDTO, MovieDTO, MyReviewDTO, PageResponse, ReviewDTO, ScreeningDTO } from "./types";
 
 async function withFallback<T>(call: () => Promise<T>, fallback: () => T): Promise<T> {
   try {
@@ -109,6 +109,9 @@ export const fetchMovieReviews = (id: number) =>
     () => api.getMovieReviews(id),
     () => demoReviews[id] ?? [],
   );
+
+/** Le recensioni dell'utente loggato, per la pagina Profilo. Vuoto in modalità demo. */
+export const fetchMyReviews = () => withFallback<MyReviewDTO[]>(api.getMyReviews, () => []);
 
 // Le scritture in modalità demo aggiornano lo store in memoria.
 

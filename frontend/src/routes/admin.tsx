@@ -322,7 +322,16 @@ function Row({ children }: { children: ReactNode }) {
 /** Barra filtri/ordinamento sopra una tabella admin. */
 function TableToolbar({ children }: { children: ReactNode }) {
   return (
-    <Stack direction="row" spacing={1.5} sx={{ mb: 2, flexWrap: "wrap", alignItems: "center" }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={{ xs: 1.5, sm: 2 }}
+      sx={{
+        mb: 3,
+        flexWrap: "wrap",
+        alignItems: { xs: "stretch", sm: "center" },
+        "& > *": { width: { xs: "100%", sm: "auto" } },
+      }}
+    >
       {children}
     </Stack>
   );
@@ -699,7 +708,7 @@ function FestivalsTab({ data, demo, busy, run, confirmAndRun }: TabProps) {
       });
   }, [data.festivals, city, year, sort]);
 
-  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 20);
+  const { page, setPage, totalPages, pageItems, totalElements } = usePagedTable(filteredSorted, 15);
 
   return (
     <>

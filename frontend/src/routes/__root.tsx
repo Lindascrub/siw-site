@@ -196,9 +196,20 @@ function SiteHeader() {
             {demo && <Chip label="Demo" size="small" variant="outlined" color="primary" />}
             {user ? (
               <>
-                <Typography variant="body2" sx={{ display: { xs: "none", sm: "block" }, color: "rgba(255,255,255,0.7)" }}>
-                  Ciao, <strong style={{ color: "#fff" }}>{user.name}</strong>
-                </Typography>
+                <AppLink
+                  to="/profilo"
+                  sx={{
+                    display: { xs: "none", sm: "block" },
+                    fontSize: 14,
+                    color: "rgba(255,255,255,0.7)",
+                    "&:hover": { color: "primary.main" },
+                  }}
+                >
+                  Ciao, <strong style={{ color: "inherit" }}>{user.name}</strong>
+                </AppLink>
+                <Button component={Link} to="/profilo" color="inherit" size="small" sx={{ display: { xs: "inline-flex", sm: "none" } }}>
+                  Profilo
+                </Button>
                 <Button
                   variant="outlined"
                   color="inherit"

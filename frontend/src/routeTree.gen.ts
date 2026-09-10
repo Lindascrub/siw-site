@@ -16,6 +16,7 @@ import { Route as ContattiRouteImport } from './routes/contatti'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PartnershipRouteImport } from './routes/partnership'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfiloRouteImport } from './routes/profilo'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as FestivalIndexRouteImport } from './routes/festival.index'
 import { Route as FestivalIdRouteImport } from './routes/festival.$id'
@@ -57,6 +58,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfiloRoute = ProfiloRouteImport.update({
+  id: '/profilo',
+  path: '/profilo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/partnership': typeof PartnershipRoute
   '/privacy': typeof PrivacyRoute
+  '/profilo': typeof ProfiloRoute
   '/register': typeof RegisterRoute
   '/festival/$id': typeof FestivalIdRoute
   '/film/$id': typeof FilmIdRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/partnership': typeof PartnershipRoute
   '/privacy': typeof PrivacyRoute
+  '/profilo': typeof ProfiloRoute
   '/register': typeof RegisterRoute
   '/festival/$id': typeof FestivalIdRoute
   '/film/$id': typeof FilmIdRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/partnership': typeof PartnershipRoute
   '/privacy': typeof PrivacyRoute
+  '/profilo': typeof ProfiloRoute
   '/register': typeof RegisterRoute
   '/festival/$id': typeof FestivalIdRoute
   '/film/$id': typeof FilmIdRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/partnership'
     | '/privacy'
+    | '/profilo'
     | '/register'
     | '/festival/$id'
     | '/film/$id'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/partnership'
     | '/privacy'
+    | '/profilo'
     | '/register'
     | '/festival/$id'
     | '/film/$id'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/partnership'
     | '/privacy'
+    | '/profilo'
     | '/register'
     | '/festival/$id'
     | '/film/$id'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PartnershipRoute: typeof PartnershipRoute
   PrivacyRoute: typeof PrivacyRoute
+  ProfiloRoute: typeof ProfiloRoute
   RegisterRoute: typeof RegisterRoute
   FestivalIdRoute: typeof FestivalIdRoute
   FilmIdRoute: typeof FilmIdRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profilo': {
+      id: '/profilo'
+      path: '/profilo'
+      fullPath: '/profilo'
+      preLoaderRoute: typeof ProfiloRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PartnershipRoute: PartnershipRoute,
   PrivacyRoute: PrivacyRoute,
+  ProfiloRoute: ProfiloRoute,
   RegisterRoute: RegisterRoute,
   FestivalIdRoute: FestivalIdRoute,
   FilmIdRoute: FilmIdRoute,

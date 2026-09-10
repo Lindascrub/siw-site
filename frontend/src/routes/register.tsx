@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLink } from "../components/AppLink";
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
@@ -26,7 +26,6 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const { register, demo } = useAuth();
-  const router = useRouter();
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -36,12 +35,41 @@ function RegisterPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const field = (key: keyof typeof form) => ({
     value: form[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value })),
   });
+
+  if (success) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
+        <Typography variant="overline" color="primary">
+          Fatto
+        </Typography>
+        <Typography variant="h1" sx={{ fontSize: 40, mt: 1 }}>
+          Account creato con successo
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 2 }}>
+          {demo
+            ? "Sei stata registrata in modalità demo: puoi già navigare come utente."
+            : `Benvenuta, ${form.name}! Ora puoi accedere con lo username che hai scelto.`}
+        </Typography>
+        <Button
+          component={Link}
+          to={demo ? "/" : "/login"}
+          variant="contained"
+          color="primary"
+          size="large"
+          sx={{ mt: 4 }}
+        >
+          {demo ? "Vai alla home" : "Vai al login"}
+        </Button>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="sm" sx={{ py: 8 }}>
@@ -60,7 +88,7 @@ function RegisterPage() {
           setError(null);
           setBusy(true);
           void register(form)
-            .then(() => router.navigate({ to: demo ? "/" : "/login" }))
+            .then(() => setSuccess(true))
             .catch((err) =>
               setError(err instanceof Error ? err.message : "Registrazione non riuscita"),
             )

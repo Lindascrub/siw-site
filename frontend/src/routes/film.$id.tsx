@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLink } from "../components/AppLink";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -44,6 +49,7 @@ function MovieDetailPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const loadReviews = () => fetchMovieReviews(movieId).then(setReviews).catch(() => setReviews([]));
 
@@ -55,8 +61,25 @@ function MovieDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movieId]);
 
+  const [reviewSort, setReviewSort] = useState<"recent" | "oldest" | "positive" | "negative">("recent");
+
   const canReview = !!user && user.role.toUpperCase() === "USER";
   const myReview = user ? reviews.find((r) => r.userId === user.id) : undefined;
+
+  const otherReviews = useMemo(() => {
+    const list = reviews.filter((r) => r.id !== myReview?.id);
+    switch (reviewSort) {
+      case "oldest":
+        return [...list].sort((a, b) => a.date.localeCompare(b.date));
+      case "positive":
+        return [...list].sort((a, b) => b.vote - a.vote);
+      case "negative":
+        return [...list].sort((a, b) => a.vote - b.vote);
+      case "recent":
+      default:
+        return [...list].sort((a, b) => b.date.localeCompare(a.date));
+    }
+  }, [reviews, myReview, reviewSort]);
 
   function startEdit(r: ReviewDTO) {
     setEditingId(r.id);
@@ -77,7 +100,9 @@ function MovieDetailPage() {
     }
     setBusy(true);
     setFormError(null);
+    setNotice(null);
     try {
+      const wasEditing = !!editingId;
       if (editingId) {
         await editReview(demo, editingId, reviewText.trim(), reviewVote);
       } else if (user) {
@@ -85,6 +110,7 @@ function MovieDetailPage() {
       }
       resetForm();
       await loadReviews();
+      setNotice(wasEditing ? "Recensione aggiornata." : "Recensione inviata, grazie!");
     } catch (e) {
       setFormError(e instanceof ApiError ? e.message : "Operazione non riuscita");
     } finally {
@@ -95,10 +121,12 @@ function MovieDetailPage() {
   async function handleDelete(reviewId: number) {
     if (!window.confirm("Eliminare la recensione? L'operazione non è reversibile.")) return;
     setBusy(true);
+    setNotice(null);
     try {
       await removeReview(demo, reviewId);
       if (editingId === reviewId) resetForm();
       await loadReviews();
+      setNotice("Recensione eliminata.");
     } catch (e) {
       setFormError(e instanceof ApiError ? e.message : "Eliminazione non riuscita");
     } finally {
@@ -232,25 +260,75 @@ function MovieDetailPage() {
           Recensioni
         </Typography>
 
+        {notice && (
+          <Alert severity="success" sx={{ mt: 3 }} onClose={() => setNotice(null)}>
+            {notice}
+          </Alert>
+        )}
+
         {reviews.length > 0 && (
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mt: 3 }}>
-            <Stars vote={Math.round((reviews.reduce((sum, r) => sum + r.vote, 0) / reviews.length) * 10) / 10} />
-            <Typography sx={{ fontWeight: 700 }}>
-              {(reviews.reduce((sum, r) => sum + r.vote, 0) / reviews.length).toFixed(1)} / 5
-            </Typography>
-            <Typography color="text.secondary">
-              ({reviews.length} {reviews.length === 1 ? "recensione" : "recensioni"})
-            </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mt: 3, flexWrap: "wrap" }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Stars vote={Math.round((reviews.reduce((sum, r) => sum + r.vote, 0) / reviews.length) * 10) / 10} />
+              <Typography sx={{ fontWeight: 700 }}>
+                {(reviews.reduce((sum, r) => sum + r.vote, 0) / reviews.length).toFixed(1)} / 5
+              </Typography>
+              <Typography color="text.secondary">
+                ({reviews.length} {reviews.length === 1 ? "recensione" : "recensioni"})
+              </Typography>
+            </Stack>
+            {otherReviews.length > 1 && (
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Ordina per</InputLabel>
+                <Select
+                  label="Ordina per"
+                  value={reviewSort}
+                  onChange={(e) => setReviewSort(e.target.value as typeof reviewSort)}
+                >
+                  <MenuItem value="recent">Più recenti</MenuItem>
+                  <MenuItem value="oldest">Più vecchie</MenuItem>
+                  <MenuItem value="positive">Più positive</MenuItem>
+                  <MenuItem value="negative">Più negative</MenuItem>
+                </Select>
+              </FormControl>
+            )}
           </Stack>
+        )}
+
+        {myReview && !editingId && (
+          <Paper variant="outlined" sx={{ mt: 4, p: 2.5, borderColor: "primary.main", borderWidth: 2 }}>
+            <Typography variant="overline" color="primary">
+              La tua recensione
+            </Typography>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mt: 0.5 }}>
+              <Stars vote={myReview.vote} />
+              <Typography variant="body2" color="text.secondary">
+                {formatDate(myReview.date)}
+              </Typography>
+            </Stack>
+            <Typography sx={{ mt: 1 }}>{myReview.text}</Typography>
+            <Stack direction="row" spacing={2} sx={{ mt: 1.5 }}>
+              <Button size="small" onClick={() => startEdit(myReview)} sx={{ minWidth: 0, p: 0 }}>
+                Modifica
+              </Button>
+              <Button size="small" color="error" onClick={() => void handleDelete(myReview.id)} sx={{ minWidth: 0, p: 0 }}>
+                Elimina
+              </Button>
+            </Stack>
+          </Paper>
         )}
 
         {reviews.length === 0 ? (
           <Typography color="text.secondary" sx={{ mt: 4 }}>
             Nessuna recensione, per ora.
           </Typography>
-        ) : (
+        ) : otherReviews.length === 0 ? null : (
           <Stack spacing={3} sx={{ mt: 4 }}>
-            {reviews.map((r) => (
+            {otherReviews.map((r) => (
               <Box key={r.id} sx={{ borderBottom: 1, borderColor: "divider", pb: 3 }}>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                   <Typography sx={{ fontWeight: 700 }}>{r.username}</Typography>
@@ -260,16 +338,6 @@ function MovieDetailPage() {
                   </Typography>
                 </Stack>
                 <Typography sx={{ mt: 1 }}>{r.text}</Typography>
-                {user && user.id === r.userId && (
-                  <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-                    <Button size="small" onClick={() => startEdit(r)} sx={{ minWidth: 0, p: 0 }}>
-                      Modifica
-                    </Button>
-                    <Button size="small" color="error" onClick={() => void handleDelete(r.id)} sx={{ minWidth: 0, p: 0 }}>
-                      Elimina
-                    </Button>
-                  </Stack>
-                )}
               </Box>
             ))}
           </Stack>
