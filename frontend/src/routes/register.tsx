@@ -26,11 +26,12 @@ export const Route = createFileRoute("/register")({
 function RegisterPage() {
   const { register } = useAuth();
   const [form, setForm] = useState({
-    username: "",
-    password: "",
+
     name: "",
     surname: "",
-    email: "",
+    email: "",    
+	username: "",
+    password: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -45,14 +46,11 @@ function RegisterPage() {
   if (success) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
-        <Typography variant="overline" color="primary">
-          Fatto
-        </Typography>
         <Typography variant="h1" sx={{ fontSize: 40, mt: 1 }}>
           Account creato con successo
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 2 }}>
-          Benvenuta, {form.name}! Ora puoi accedere con lo username che hai scelto.
+          Benvenuta, {form.name}! 
         </Typography>
         <Button
           component={Link}

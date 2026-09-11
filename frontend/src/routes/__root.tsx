@@ -27,7 +27,6 @@ import YouTubeIcon from "@mui/icons-material/YouTube";
 import { ThemeProvider } from "@mui/material/styles";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { theme } from "../theme";
 

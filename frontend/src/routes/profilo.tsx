@@ -47,7 +47,6 @@ function ProfiloPage() {
   useEffect(() => {
     if (user) void load();
     else setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   function startEdit(r: MyReviewDTO) {
@@ -65,8 +64,8 @@ function ProfiloPage() {
 
   async function handleSave() {
     if (!editingId) return;
-    if (!text.trim() || vote < 1) {
-      setError("Inserisci un testo e un voto da 1 a 5 stelle.");
+    if (vote < 1) {
+      setError("Inserisci un voto da 1 a 5 stelle.");
       return;
     }
     setBusy(true);
@@ -83,7 +82,7 @@ function ProfiloPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!window.confirm("Eliminare la recensione? L'operazione non è reversibile.")) return;
+    if (!window.confirm("Sicuro di voler eliminare la recensione? L'operazione non è reversibile.")) return;
     setBusy(true);
     setError(null);
     try {
@@ -91,7 +90,7 @@ function ProfiloPage() {
       if (editingId === id) cancelEdit();
       await load();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Eliminazione non riuscita");
+      setError(e instanceof ApiError ? e.message : "Operazione non riuscita");
     } finally {
       setBusy(false);
     }
